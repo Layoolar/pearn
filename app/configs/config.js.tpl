@@ -9,13 +9,6 @@ module.exports = {
 		token: "BOT_TOKEN",
 	},
 
-	twitter: {
-		consumer_key: "64Spi2XWE5na12LipbAFTqKGb",
-		consumer_secret: "EYPye8AKQqbkljy2HaXelnKVWDeJVDiJTnRK8rQtL8c3rVKi7K",
-		access_token: "1454036918463762437-ceuN9mqITH3uvnpupnbM20HPjK00tf",
-		access_token_secret: "mOPAywawxCi3F5l7MQw5zbagHODtwWhPDwFKiIR7oANIc",
-	},
-
 	mode: "poll", // or webhook
 	webhook: {
 		url: "https://sample.host.com:8443",

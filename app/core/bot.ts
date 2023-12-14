@@ -16,6 +16,7 @@ import * as hears from "@app/functions/hears";
 	await command.submit();
 	await command.points();
 	await command.test();
+	await command.setPost();
 	await hears.text();
 	await command.launch();
 })();

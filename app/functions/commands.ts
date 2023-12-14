@@ -60,6 +60,16 @@ const data = {
 };
 
 /**
+ *
+ */
+const setPost = async (): Promise<void> => {
+	bot.command("set_post", async (ctx) => {
+		const user = ctx.update.message.from;
+		console.log(user);
+	});
+};
+
+/**
  * command: /submit
  * ======================
  * For users to submit twitter links
@@ -89,12 +99,8 @@ const submit = async (): Promise<void> => {
 					🌟 <i>You've been assigned ${points} points for your post.</i>
 
 					<b>Here is a breakdown of your tweet</b>
-					<i>${hashtags_found} of ${total_hashtags} given hashtag${
-						total_hashtags === 1 ? "" : "s"
-					} were found in your tweet</i>
-					<i>${keywords_found} of ${total_keywords} given keyword${
-						total_keywords === 1 ? "" : "s"
-					} were found in your tweet</i>
+					<i>${hashtags_found} of ${total_hashtags} given hashtag${total_hashtags === 1 ? "" : "s"} were found in your tweet</i>
+					<i>${keywords_found} of ${total_keywords} given keyword${total_keywords === 1 ? "" : "s"} were found in your tweet</i>
 
 					To check your total points, use the command: <b>/points</b>`;
 
@@ -181,5 +187,5 @@ const launch = async (): Promise<void> => {
 	}
 };
 
-export { launch, quit, points, submit, start, test };
+export { launch, quit, points, submit, start, test, setPost };
 export default launch;

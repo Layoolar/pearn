@@ -15,10 +15,19 @@ import lowdbFileSync from "lowdb/adapters/FileSync";
 interface DatabaseSchema {
 	users: TelegramUserInterface[];
 	points: { user_id: number; points: number }[];
+	posts: {
+		id: string;
+		adminId: number;
+		text: string;
+		links: string[];
+	};
+	links: { id: string; postId: string; userId: number; url: string }[];
 }
 
 const usersAdapter = new lowdbFileSync<DatabaseSchema>(configs.databases.users);
 const pointsAdapter = new lowdbFileSync<DatabaseSchema>(configs.databases.points);
+const postsAdapter = new lowdbFileSync<DatabaseSchema>(configs.databases.posts);
+const linksAdapter = new lowdbFileSync<DatabaseSchema>(configs.databases.links);
 
 const usersDB = lowdb(usersAdapter);
 const pointsDB = lowdb(pointsAdapter);
