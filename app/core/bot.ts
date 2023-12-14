@@ -13,7 +13,9 @@ import * as hears from "@app/functions/hears";
 (async () => {
 	await command.quit();
 	await command.start();
-	await command.sendPhoto();
+	await command.submit();
+	await command.points();
+	await command.test();
 	await hears.text();
 	await command.launch();
 })();

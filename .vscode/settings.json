@@ -2,7 +2,7 @@
 	"files.autoSave": "afterDelay",
 	"files.autoSaveDelay": 30000,
 	"editor.codeActionsOnSave": {
-		"source.fixAll.eslint": true
+		"source.fixAll.eslint": "explicit"
 	},
 	"eslint.format.enable": true,
 	"[javascript]": {
@@ -76,5 +76,12 @@
 		"mode": "Class",
 		"types": "Typescript",
 		"ISSUE_TEMPLATE": "Template"
+	},
+	"workbench.colorCustomizations": {
+		"editorLineNumber.foreground": "#999999",
+		"editorLineNumber.activeForeground": "#FFFFFF",
+		"activityBar.background": "#17331E",
+		"titleBar.activeBackground": "#20482A",
+		"titleBar.activeForeground": "#F8FCF9"
 	}
 }

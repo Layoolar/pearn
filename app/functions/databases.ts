@@ -12,10 +12,19 @@ import configs from "@configs/config";
 import lowdb from "lowdb";
 import lowdbFileSync from "lowdb/adapters/FileSync";
 
-const databases = { users: lowdb(new lowdbFileSync<{ users: TelegramUserInterface[] }>(configs.databases.users)) };
+interface DatabaseSchema {
+	users: TelegramUserInterface[];
+	points: { user_id: number; points: number }[];
+}
 
-databases.users = lowdb(new lowdbFileSync(configs.databases.users));
-databases.users.defaults({ users: [] }).write();
+const usersAdapter = new lowdbFileSync<DatabaseSchema>(configs.databases.users);
+const pointsAdapter = new lowdbFileSync<DatabaseSchema>(configs.databases.points);
+
+const usersDB = lowdb(usersAdapter);
+const pointsDB = lowdb(pointsAdapter);
+
+usersDB.defaults({ users: [] }).write();
+pointsDB.defaults({ points: [] }).write();
 
 /**
  * writeUser()
@@ -30,14 +39,27 @@ databases.users.defaults({ users: [] }).write();
  *
  */
 const writeUser = async (json: TelegramUserInterface): Promise<void> => {
-	const user_id = databases.users.get("users").find({ id: json.id }).value();
+	const user_id = usersDB.get("users").find({ id: json.id }).value();
 
 	if (user_id) {
-		databases.users.get("users").find({ id: user_id.id }).assign(json).write();
+		usersDB.get("users").find({ id: user_id.id }).assign(json).write();
 	} else {
-		databases.users.get("users").push(json).write();
+		usersDB.get("users").push(json).write();
 	}
 };
 
-export { databases, writeUser };
-export default databases;
+const writePoint = async (userId: number, points: number): Promise<void> => {
+	const userPoints = pointsDB.get("points").find({ user_id: userId }).value();
+
+	if (userPoints) {
+		pointsDB
+			.get("points")
+			.find({ user_id: userId })
+			.assign({ points: userPoints.points + points })
+			.write();
+	} else {
+		pointsDB.get("points").push({ user_id: userId, points }).write();
+	}
+};
+
+export { usersDB, pointsDB, writeUser, writePoint };
