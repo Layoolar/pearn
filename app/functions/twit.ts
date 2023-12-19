@@ -1,5 +1,6 @@
 import configs from "@configs/config";
 import Twit from "twit";
+import { Post } from "./databases";
 
 /**
  *
@@ -51,25 +52,25 @@ const checkLinkandExtractId = (link: string): string | null => {
  * @param {string} tweetId - link string
  * @return {Tweet | null} response or null
  */
-const fetchTweet = async (tweetId: string): Promise<Tweet | null> => {
-	try {
-		const response = await twitterClient.get("statuses/show/:id", { id: tweetId, tweet_mode: "extended" });
-		return response.data as Tweet;
-	} catch (error) {
-		// TODO Take care of response and send to user
-		// console.error("Error fetching tweet:", error);
-		return null;
-	}
+const fetchTweet = (tweetId: string): Promise<Tweet | null> => {
+	return new Promise((resolve, reject) => {
+		twitterClient
+			.get("statuses/show/:id", { id: tweetId, tweet_mode: "extended" })
+			.then((response) => resolve(response.data as Tweet))
+			.catch((error) => {
+				reject(error);
+			});
+	});
 };
 
 /**
  *
  * @param {Tweet} tweet - tweet param
+ * @param post
  * @return {number} points
  */
-const checkTweet = (tweet: Tweet | null): TweetCheckData => {
-	const hashtags = ["nodejs", "react", "typescript"];
-	const keywords = ["new", "project"];
+const checkTweet = (tweet: Tweet | null, post: Post): TweetCheckData => {
+	const { hashtags, keywords } = post.entities;
 	const data = {
 		tweet_found: false,
 		total_hashtags: hashtags.length,
@@ -84,13 +85,19 @@ const checkTweet = (tweet: Tweet | null): TweetCheckData => {
 	}
 	data.tweet_found = true;
 
-	const tagsArray = tweet.entities.hashtags.map((hashtag) => hashtag.text);
-	const countHashtags = hashtags.filter((item) => tagsArray.indexOf(item) !== -1);
+	const tagsArray = tweet.entities.hashtags.map((hashtag) => hashtag.text.toLowerCase());
+	const countHashtags = hashtags.filter((item) => {
+		item = item.toLowerCase();
+		if (item.startsWith("#")) {
+			return tagsArray.indexOf(item.substring(1)) !== -1;
+		}
+		return tagsArray.indexOf(item) !== -1;
+	});
 	if (countHashtags.length) {
 		data.points += 1 * countHashtags.length;
 		data.hashtags_found = countHashtags.length;
 	}
-	const countKeywords = keywords.filter((keyword) => tweet.full_text.includes(keyword));
+	const countKeywords = keywords.filter((keyword) => tweet.full_text.toLowerCase().includes(keyword.toLowerCase()));
 	if (countKeywords.length) {
 		data.points += 1 * countKeywords.length;
 		data.keywords_found = countKeywords.length;
