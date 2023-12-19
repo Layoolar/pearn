@@ -66,7 +66,7 @@ const fetchTweet = (tweetId: string): Promise<Tweet | null> => {
 /**
  *
  * @param {Tweet} tweet - tweet param
- * @param post
+ * @param {Post} post - tweet param
  * @return {number} points
  */
 const checkTweet = (tweet: Tweet | null, post: Post): TweetCheckData => {
