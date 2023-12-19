@@ -24,7 +24,7 @@ module.exports = {
 		selfSigned: true
 	},
 
-	"databases": { users: "databases/users.json" },
+	"databases": { users: "databases/users.json", data: "databases/data.json"},
 
 	// Debug
 	"debug": true,
