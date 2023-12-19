@@ -11,29 +11,37 @@ import type { TelegramUserInterface } from "@app/types/databases.type";
 import configs from "@configs/config";
 import lowdb from "lowdb";
 import lowdbFileSync from "lowdb/adapters/FileSync";
+interface Post {
+	post_id: number;
+	admin_id: number;
+	full_text: string;
+	entities: {
+		hashtags: string[];
+		keywords: string[];
+	};
+}
 
+interface Link {
+	link_id: string;
+	post_id: number;
+	user_id: number;
+	url: string;
+}
 interface DatabaseSchema {
 	users: TelegramUserInterface[];
 	points: { user_id: number; points: number }[];
-	posts: {
-		id: string;
-		adminId: number;
-		text: string;
-		links: string[];
-	};
-	links: { id: string; postId: string; userId: number; url: string }[];
+	posts: Post[];
+	links: Link[];
 }
 
 const usersAdapter = new lowdbFileSync<DatabaseSchema>(configs.databases.users);
-const pointsAdapter = new lowdbFileSync<DatabaseSchema>(configs.databases.points);
-const postsAdapter = new lowdbFileSync<DatabaseSchema>(configs.databases.posts);
-const linksAdapter = new lowdbFileSync<DatabaseSchema>(configs.databases.links);
+const dataAdapter = new lowdbFileSync<DatabaseSchema>(configs.databases.data);
 
 const usersDB = lowdb(usersAdapter);
-const pointsDB = lowdb(pointsAdapter);
+const dataDB = lowdb(dataAdapter);
 
 usersDB.defaults({ users: [] }).write();
-pointsDB.defaults({ points: [] }).write();
+dataDB.defaults({ points: [], posts: [], links: [] }).write();
 
 /**
  * writeUser()
@@ -57,18 +65,51 @@ const writeUser = async (json: TelegramUserInterface): Promise<void> => {
 	}
 };
 
+const writePost = async (post: Post): Promise<void> => {
+	const postExists = dataDB.get("posts").find({ post_id: post.post_id }).value();
+
+	if (postExists) {
+		dataDB
+			.get("posts")
+			.find({ post_id: postExists.post_id })
+			.assign({ ...post })
+			.write();
+	} else {
+		dataDB.get("posts").push(post).write();
+	}
+};
+
+const getPosts = (): Post[] => {
+	const posts = dataDB.get("posts").value();
+	return posts;
+};
+
+const getPost = (post_id: number): Post | null => {
+	return dataDB.get("posts").find({ post_id }).value();
+};
+
+const writeLink = async (newLink: Link): Promise<void | -1> => {
+	const postLink = dataDB.get("links").find({ link_id: newLink.link_id }).value();
+
+	if (postLink) {
+		return -1;
+	} else {
+		dataDB.get("links").push(newLink).write();
+	}
+};
+
 const writePoint = async (userId: number, points: number): Promise<void> => {
-	const userPoints = pointsDB.get("points").find({ user_id: userId }).value();
+	const userPoints = dataDB.get("points").find({ user_id: userId }).value();
 
 	if (userPoints) {
-		pointsDB
+		dataDB
 			.get("points")
 			.find({ user_id: userId })
 			.assign({ points: userPoints.points + points })
 			.write();
 	} else {
-		pointsDB.get("points").push({ user_id: userId, points }).write();
+		dataDB.get("points").push({ user_id: userId, points }).write();
 	}
 };
 
-export { usersDB, pointsDB, writeUser, writePoint };
+export { usersDB, dataDB, writeUser, writePoint, writePost, getPost, getPosts, Post, writeLink };
