@@ -8,11 +8,23 @@
  *
  */
 import bot from "@app/functions/telegraf";
-import { dataDB, writeUser, writePoint, writePost, writeLink, getPost, getPosts } from "@app/functions/databases";
+import {
+	dataDB,
+	writeUser,
+	writePoint,
+	writePost,
+	writeLink,
+	getPost,
+	getPosts,
+	writeAdmins,
+	getUser,
+	getAdmin,
+} from "@app/functions/databases";
 import config from "@configs/config";
 import { launchPolling, launchWebhook } from "./launcher";
 import { checkLinkandExtractId, checkTweet, fetchTweet } from "@app/functions/twit";
-import { parseSetPostCommand } from "@app/functions/utils";
+import { getPostIdentifier, parseSetPostCommand } from "@app/functions/utils";
+import { MiddlewareFn, Context, Markup } from "telegraf";
 
 const commands = `
 <b>Available Commands:</b>
@@ -20,25 +32,31 @@ const commands = `
 - <b>/start</b> 🚀
   - <i>Description:</i> Start your journey with Eddy and receive a warm welcome message.
 
-- <b>/help</b> ℹ️
-  - <i>Description:</i> Get assistance and discover all the amazing features of Eddy.
-
-- <b>/todays_post</b> 📢
-  - <i>Description:</i> Get the latest post of the day. Admins can set it using the <b>/set_post</b> command.
+- <b>/menu</b>
+  - <i>Description:</i> Display all Eddy menu buttons.
 
 - <b>/set_post [Your Message]</b> 🖋️ (Admin Only)
-  - <i>Description:</i> Admins can use this command to set the post that will be shared with users using /todays_post. See /format for more info.
-
-- <b>/format</b>
-  - <i>Description:</i> Check this format for your today's post.
+  - <i>Description:</i> Admins can use this command to set the post that will be shared with users using /todays_post. Click <b>Post format</b> for more info.
 
 - <b>/submit [Your twitter post link]</b> 🖋️
   - <i>Description:</i> Post your tweet link here and receive points after Eddy has checked and verified it.
 
-- <b>/points</b> 🖋️
+- <b>/update_admins</b> 🖋️
+  - <i>Description:</i> Inform Eddy that a new administator has been added.
+
+- <b>Help</b> ℹ️
+  - <i>Description:</i> Get assistance and discover all the amazing features of Eddy.
+
+- <b>Today's posts</b> 📢
+  - <i>Description:</i> Get the latest post of the day. Admins can set it using the <b>/set_post</b> command.
+
+- <b>Format</b>
+  - <i>Description:</i> Check this format for your today's post.
+
+- <b>My points</b> 🖋️
   - <i>Description:</i> Check your total post points here.
 
-- <b>/quit</b> 🚪 (Admin Only)
+- <b>Quit</b> 🚪 (Admin Only)
   - <i>Description:</i> Admins can use this command to make Eddy leave a group or channel.
 `;
 
@@ -53,7 +71,7 @@ Hello there! 👋 Welcome to <b>Eddy</b>, your friendly companion in the world o
 
 ${commands}
 
-Feel free to explore and enjoy your time with Eddy! If you have any questions, use the <b>/help</b> command or reach out to our support. Have a fantastic day! 🌟
+Feel free to explore and enjoy your time with Eddy! If you have any questions, use the <b>Help</b> button or reach out to our support. Have a fantastic day! 🌟
 `;
 
 const formatMessage = `
@@ -84,58 +102,192 @@ let data = {
 	},
 };
 
+const buttons = Markup.inlineKeyboard([
+	[Markup.button.callback("Today's posts", "todays_post"), Markup.button.callback("My points", "points")],
+	[Markup.button.callback("Submit wallet", "wallet")],
+	[Markup.button.callback("Post format", "format"), Markup.button.callback("Help", "help")],
+	[Markup.button.callback("Test", "test"), Markup.button.callback("Quit", "quit")],
+]);
+
+// Middlewares
+bot.use(async (ctx, next) => {
+	next();
+});
+
+const isValidUserMiddleware: MiddlewareFn<Context> = (ctx, next) => {
+	if (!ctx.from) {
+		return;
+	}
+	if (!getUser(ctx.from)) {
+		ctx.reply("<b>You need to use /start in a private message to Eddy before you can use commands</b>", {
+			parse_mode: "HTML",
+		});
+	} else {
+		next();
+	}
+};
+
+const updateAdminMiddleware: MiddlewareFn<Context> = async (ctx, next) => {
+	if (ctx.chat && ctx.chat.type !== "private") {
+		const chat_id = ctx.chat.id;
+		const admins = await ctx.getChatAdministrators();
+		const admins_data = admins.map((admin) => {
+			return { chat_id, user_id: admin.user.id, status: admin.status };
+		});
+		writeAdmins(admins_data);
+		next();
+	} else {
+		ctx.reply("You need to be in a group or supergroup to use this command");
+	}
+};
+
+const useAdminMiddleware: MiddlewareFn<Context> = (ctx, next) => {
+	if (ctx.from) {
+		const admin = getAdmin(ctx.from.id);
+		if (admin) {
+			next();
+		} else {
+			ctx.reply("You need administrative permissions to use this command");
+		}
+	}
+};
+
+// Button actions
+
+// bot.action("set_wallet", isValidUserMiddleware, (ctx) => { });
+
+bot.action("todays_post", isValidUserMiddleware, async (ctx) => {
+	const posts = getPosts();
+	if (!posts.length) {
+		ctx.reply("There are no posts");
+	} else {
+		if (ctx.from) {
+			await ctx.telegram.sendMessage(
+				ctx.from.id,
+				`<b>Ensure you reply the post with your link using the /submit command</b>`,
+				{ parse_mode: "HTML" },
+			);
+		}
+		posts.forEach(async (post) => {
+			const postHTML = `
+				<b>Post ID ${post.post_id} - ${post.post_points} point${post.post_points === 1 ? "" : "s"}</b>\n<i>${post.full_text}</i>
+				`;
+			if (ctx.from) {
+				await ctx.telegram.sendMessage(ctx.from.id, postHTML, { parse_mode: "HTML" });
+			}
+		});
+	}
+});
+
+bot.action("points", isValidUserMiddleware, (ctx) => {
+	const user = ctx.from;
+	if (user) {
+		const userPoints = dataDB.get("points").find({ user_id: user.id }).value();
+		ctx.telegram.sendMessage(
+			user.id,
+			`<b>${user.username}, you currently have ${userPoints.points} point${
+				userPoints.points === 1 ? "" : "s"
+			}</b>`,
+			{ parse_mode: "HTML" },
+		);
+	}
+});
+
+bot.action("format", useAdminMiddleware, (ctx) => {
+	ctx.replyWithHTML(formatMessage);
+});
+
+bot.action("test", useAdminMiddleware, async (ctx) => {
+	ctx.reply("You found the test command");
+});
+
+bot.action("help", isValidUserMiddleware, (ctx) => {
+	if (ctx.chat) {
+		ctx.telegram.sendMessage(ctx.chat.id, helpMessage, {
+			reply_markup: buttons.reply_markup,
+			parse_mode: "HTML",
+		});
+	}
+});
+
+bot.action("quit", useAdminMiddleware, async (ctx) => {
+	if (ctx.chat && ctx.chat.type !== "private") {
+		const admins = await ctx.getChatAdministrators();
+		const user = admins.find((e) => {
+			if (ctx.from && e.user.id == ctx.from.id) {
+				return e;
+			}
+		});
+		if (user && user.status == "creator") {
+			ctx.leaveChat();
+		}
+	}
+});
+
+//
+bot.on("new_chat_members", updateAdminMiddleware, () => {
+	return;
+});
+
+bot.on("chat_member", updateAdminMiddleware, () => {
+	return;
+});
+//
+
+// Commands
+
 /**
  *
  */
-const setPost = async (): Promise<void | never> => {
-	bot.command("set_post", async (ctx) => {
-		if (ctx.chat.type !== "private") {
-			const admins = await ctx.getChatAdministrators();
-			const user = admins.find((e) => {
-				if (e.user.id == ctx.update.message.from.id) {
-					return e;
-				}
-			});
-			if (user && (user.status === "creator" || user.status === "administrator")) {
-				try {
-					const { tweet, keywords, hashtags } = parseSetPostCommand(ctx.message.text);
-					const newPost = {
-						post_id: ctx.message.message_id,
-						admin_id: user.user.id,
-						full_text: tweet,
-						entities: { keywords, hashtags },
-					};
-					writePost(newPost);
-					ctx.reply("<b>The new post has been set successfully ✅</b>", { parse_mode: "HTML" });
-				} catch (error: unknown) {
-					ctx.reply((error as Error).message);
-				}
-			}
-		} else {
-			ctx.reply("This command can only be used in a group or supergroup by an admin");
-		}
+const updateAdmins = (): void => {
+	bot.command("update_admins", useAdminMiddleware, updateAdminMiddleware, (ctx) => {
+		ctx.replyWithHTML("<b>The admins have been updated successfully ✅.</b>");
 	});
 };
 
 /**
  *
  */
-const listPosts = async (): Promise<void> => {
-	bot.command("/todays_post", (ctx) => {
-		const posts = getPosts();
-		if (!posts.length) {
-			ctx.reply("There are no posts");
+const menu = (): void => {
+	bot.command("menu", isValidUserMiddleware, (ctx) => {
+		ctx.telegram.sendMessage(ctx.message.chat.id, "<b>Eddy Bot Menu</b>", {
+			reply_markup: buttons.reply_markup,
+			parse_mode: "HTML",
+		});
+	});
+};
+
+/**
+ *
+ */
+const setPost = async (): Promise<void | never> => {
+	bot.command("set_post", isValidUserMiddleware, useAdminMiddleware, async (ctx) => {
+		if (ctx.chat.type === "private") {
+			const admin = getAdmin(ctx.from.id);
+			if (admin) {
+				try {
+					const { tweet, keywords, hashtags } = parseSetPostCommand(ctx.message.text);
+					const newPost = {
+						post_id: Math.floor(Date.now() / 1000),
+						admin_id: admin.user_id,
+						full_text: tweet,
+						post_points: keywords.length + hashtags.length,
+						entities: { keywords, hashtags },
+					};
+					writePost(newPost);
+					ctx.telegram.sendMessage(
+						admin.chat_id,
+						"<b>The new post has been set successfully ✅. Use <i>Todays post</i> button in menu to see all posts</b>",
+						{
+							parse_mode: "HTML",
+						},
+					);
+				} catch (error: unknown) {
+					ctx.reply((error as Error).message);
+				}
+			}
 		} else {
-			ctx.reply(`<b>Ensure you reply the post with your link using the /submit command</b>`, {
-				parse_mode: "HTML",
-			});
-			posts.forEach((post, index) => {
-				const postHTML = `
-				<b>Post ${index + 1}</b>
-				${post.full_text}
-				`;
-				ctx.reply(postHTML, { parse_mode: "HTML" });
-			});
+			ctx.reply("This command can only be used in a private chat by an admin");
 		}
 	});
 };
@@ -146,7 +298,7 @@ const listPosts = async (): Promise<void> => {
  * For users to submit twitter links
  */
 const submit = async (): Promise<void> => {
-	bot.command("submit", async (ctx) => {
+	bot.command("submit", isValidUserMiddleware, async (ctx) => {
 		let tweet;
 		const link = ctx.update.message.text.split(" ")[1];
 		if (!link) {
@@ -177,7 +329,13 @@ const submit = async (): Promise<void> => {
 		if (tweet) {
 			data = tweet;
 		}
-		const postData = getPost(repliedMessage.message_id);
+		const repliedMessageText = (repliedMessage as { text: string }).text;
+		const repliedMessageId = getPostIdentifier(repliedMessageText);
+		if (!repliedMessageId) {
+			ctx.reply("Unable to extract post identifier");
+			return;
+		}
+		const postData = getPost(repliedMessageId);
 		if (!postData) {
 			ctx.reply("Post does not exist or has been deleted");
 			return;
@@ -193,7 +351,7 @@ const submit = async (): Promise<void> => {
 			if (
 				(await writeLink({
 					link_id: tweetId,
-					post_id: repliedMessage.message_id,
+					post_id: repliedMessageId,
 					user_id: ctx.from.id,
 					url: link,
 				})) === -1
@@ -204,87 +362,15 @@ const submit = async (): Promise<void> => {
 			writePoint(ctx.update.message.from.id, points);
 			const msg = `<b>Your tweet has been submitted and checked!</b>
 
-					🌟 <i>You've been assigned ${points} points for your post.</i>
+					🌟 <i>You've been assigned ${points} out of ${total_keywords + total_hashtags} points for your post.</i>
 
 					<b>Here is a breakdown of your tweet</b>
 					<i>${hashtags_found} of ${total_hashtags} given hashtag${total_hashtags === 1 ? "" : "s"} were found in your tweet</i>
 					<i>${keywords_found} of ${total_keywords} given keyword${total_keywords === 1 ? "" : "s"} were found in your tweet</i>
 
-					To check your total points, use the command: <b>/points</b>`;
+					To check your total points, click the <b>My points</b> button`;
 
 			ctx.telegram.sendMessage(ctx.message.chat.id, msg, { parse_mode: "HTML" });
-		}
-	});
-};
-
-/**
- * command: /points
- * ======================
- * For users to check their points
- */
-const points = async (): Promise<void> => {
-	bot.command("points", (ctx) => {
-		const user = ctx.from;
-		const userPoints = dataDB.get("points").find({ user_id: user.id }).value();
-		ctx.reply(
-			`User ${user.username}, you currently have ${userPoints.points} point${userPoints.points === 1 ? "" : "s"}`,
-		);
-	});
-};
-
-/**
- * command: /format
- * ===========================
- * For users and admins to check tweet format
- */
-const format = async (): Promise<void> => {
-	bot.command("format", (ctx) => {
-		ctx.replyWithHTML(formatMessage);
-	});
-};
-
-/**
- * command: /help
- * ===========================
- * For users and admins to see commands
- */
-const help = async (): Promise<void> => {
-	bot.command("help", (ctx) => {
-		ctx.replyWithHTML(helpMessage);
-	});
-};
-
-/**
- * command: /test
- * ============================
- * Test command
- */
-const test = async (): Promise<void> => {
-	bot.command("test", async (ctx) => {
-		// console.log(ctx.message);
-		ctx.reply("You clicked the test command");
-	});
-};
-
-/**
- * command: /quit
- * =====================
- * If user exit from bot
- *
- */
-const quit = async (): Promise<void> => {
-	bot.command("quit", async (ctx) => {
-		if (ctx.chat.type !== "private") {
-			const admins = await ctx.getChatAdministrators();
-			const user = admins.find((e) => {
-				if (e.user.id == ctx.update.message.from.id) {
-					return e;
-				}
-			});
-			if (user && user.status == "creator") {
-				ctx.telegram.leaveChat(ctx.message.chat.id);
-				// ctx.leaveChat();
-			}
 		}
 	});
 };
@@ -297,10 +383,21 @@ const quit = async (): Promise<void> => {
  */
 const start = async (): Promise<void> => {
 	bot.start((ctx) => {
-		writeUser(ctx.update.message.from);
-		writePoint(ctx.update.message.from.id, 0);
+		if (ctx.chat.type === "private" && !getUser(ctx.from)) {
+			writeUser(ctx.update.message.from);
+			writePoint(ctx.update.message.from.id, 0);
 
-		ctx.telegram.sendMessage(ctx.message.chat.id, welcomeMessage, { parse_mode: "HTML" });
+			ctx.telegram.sendMessage(ctx.message.chat.id, welcomeMessage, {
+				reply_markup: buttons.reply_markup,
+				parse_mode: "HTML",
+			});
+		} else if (ctx.chat.type !== "private" && !getUser(ctx.from)) {
+			ctx.telegram.sendMessage(
+				ctx.message.chat.id,
+				"<b>You need to use /start in a private message to Eddy before you can use commands in this group</b>",
+				{ parse_mode: "HTML" },
+			);
+		}
 	});
 };
 
@@ -319,5 +416,5 @@ const launch = async (): Promise<void> => {
 	}
 };
 
-export { launch, quit, points, submit, format, start, help, test, setPost, listPosts };
+export { launch, start, menu, setPost, submit, updateAdmins };
 export default launch;

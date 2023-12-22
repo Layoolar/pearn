@@ -53,4 +53,11 @@ function parseSetPostCommand(text: string): ExtractedData {
 	return { tweet, keywords, hashtags };
 }
 
-export { parseSetPostCommand };
+function getPostIdentifier(text: string): number | null {
+	const idRegex = /Post ID (\d+) - .+/;
+
+	const match = text.match(idRegex);
+	return match ? Number(match[1]) : null;
+}
+
+export { parseSetPostCommand, getPostIdentifier };

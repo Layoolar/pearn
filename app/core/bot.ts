@@ -11,15 +11,11 @@ import * as hears from "@app/functions/hears";
  *
  */
 (async () => {
-	await command.quit();
 	await command.start();
-	await command.submit();
-	await command.format();
-	await command.points();
-	await command.help();
-	await command.test();
+	await command.menu();
 	await command.setPost();
-	await command.listPosts();
+	await command.submit();
+	await command.updateAdmins();
 	await hears.text();
 	await command.launch();
 })();
