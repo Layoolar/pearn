@@ -13,6 +13,7 @@ import * as hears from "@app/functions/hears";
 (async () => {
 	await command.start();
 	await command.menu();
+	await command.addTwitter();
 	await command.setPost();
 	await command.submit();
 	await command.updateAdmins();

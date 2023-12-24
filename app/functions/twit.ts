@@ -38,17 +38,6 @@ const twitterClient = new Twit({
 
 /**
  *
- * @param {string} link - link string
- * @return {boolean} true / false
- */
-const checkLinkandExtractId = (link: string): string | null => {
-	const twitterRegex = /^https?:\/\/(?:www\.)?(?:twitter|x)\.com\/(?:\w+\/status\/(\d+))(?:\?.*)?$/i;
-	const match = link.match(twitterRegex);
-	return match ? match[1] : null;
-};
-
-/**
- *
  * @param {string} tweetId - link string
  * @return {Tweet | null} response or null
  */
@@ -70,7 +59,10 @@ const fetchTweet = (tweetId: string): Promise<Tweet | null> => {
  * @return {number} points
  */
 const checkTweet = (tweet: Tweet | null, post: Post): TweetCheckData => {
-	const { hashtags, keywords } = post.entities;
+	const {
+		post_points,
+		entities: { hashtags, keywords },
+	} = post;
 	const data = {
 		tweet_found: false,
 		total_hashtags: hashtags.length,
@@ -103,7 +95,11 @@ const checkTweet = (tweet: Tweet | null, post: Post): TweetCheckData => {
 		data.keywords_found = countKeywords.length;
 	}
 
+	if (data.points > 0) {
+		data.points = Math.round((data.points / (data.total_hashtags + data.total_keywords)) * post_points);
+	}
+
 	return data;
 };
 
-export { checkLinkandExtractId, fetchTweet, checkTweet };
+export { fetchTweet, checkTweet };

@@ -12,6 +12,10 @@ import configs from "@configs/config";
 import lowdb from "lowdb";
 import lowdbFileSync from "lowdb/adapters/FileSync";
 
+interface UserData {
+	user_id: number;
+	twitter_username: string;
+}
 interface Admin {
 	chat_id: string | number;
 	user_id: number;
@@ -42,6 +46,7 @@ interface Link {
 }
 interface DatabaseSchema {
 	users: TelegramUserInterface[];
+	users_data: UserData[];
 	admins: Admin[];
 	points: Point[];
 	posts: Post[];
@@ -55,7 +60,7 @@ const usersDB = lowdb(usersAdapter);
 const dataDB = lowdb(dataAdapter);
 
 usersDB.defaults({ users: [] }).write();
-dataDB.defaults({ admins: [], points: [], posts: [], links: [] }).write();
+dataDB.defaults({ users_data: [], admins: [], points: [], posts: [], links: [] }).write();
 
 /**
  * writeUser()
@@ -86,6 +91,38 @@ const writeUser = async (json: TelegramUserInterface): Promise<void> => {
  */
 const getUser = (user: TelegramUserInterface): TelegramUserInterface | null => {
 	return usersDB.get("users").find({ id: user.id }).value();
+};
+
+/**
+ * writeUserData()
+ * ===================
+ * Write user information to database
+ *
+ * @param { UserData } data - user informatio object
+ *
+ * @return { Promise<void> }
+ */
+const writeUserData = async (data: UserData): Promise<void> => {
+	const user_id = dataDB.get("users_data").find({ user_id: data.user_id }).value();
+
+	if (user_id) {
+		dataDB.get("users_data").find({ user_id: data.user_id }).assign(data).write();
+	} else {
+		dataDB.get("users_data").push(data).write();
+	}
+};
+
+/**
+ * getUserData()
+ * =====================
+ * Get user information from the database
+ *
+ * @param {number} user_id - user id
+ *
+ * @return {UserData | null} - An user data object or null
+ */
+const getUserData = (user_id: number): UserData | null => {
+	return dataDB.get("users_data").find({ user_id }).value();
 };
 
 /**
@@ -218,6 +255,8 @@ export {
 	Admin,
 	writeUser,
 	getUser,
+	writeUserData,
+	getUserData,
 	writeAdmins,
 	getAdmin,
 	writePoint,
