@@ -21,7 +21,6 @@ interface ExtractedData {
  *
  * @example
  * const text = `
- * # SetPost
  * Tweet: "Hey friends, just played a thrilling game of ball with a tiger in the backyard! 🐯🏀"
  * Keywords: ball, tiger, friends
  * Hashtags: #nodejs, #coding, #wildlife, #friends
@@ -37,14 +36,14 @@ interface ExtractedData {
 
 function parseSetPostCommand(text: string): ExtractedData {
 	// Regular expressions to match lines containing tweet, keywords and hashtags
-	const setPostRegex = /# SetPost\s*Tweet:\s*"([^"]*)"\s*Keywords:\s*([^]*?)\s*Hashtags:\s*([^]*)\s*Points:\s*(\d+)/;
+	const setPostRegex = /\/set_post\s*Tweet:\s*"([^"]*)"\s*Keywords:\s*([^]*?)\s*Hashtags:\s*([^]*)\s*Points:\s*(\d+)/;
 
 	// Extracting matches from the text
 	const match = text.match(setPostRegex);
 
 	// Throw an error if the input text is not in the expected format
 	if (!match) {
-		throw new Error("Input text does not match the expected format. See example in /format");
+		throw new Error("Input text does not match the expected format. See example using Post format in menu");
 	}
 
 	// Extracting and trimming tweet, keywords and hashtags

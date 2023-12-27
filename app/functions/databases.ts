@@ -216,13 +216,19 @@ const getPost = (post_id: number): Post | null => {
  * @return { Promise<void | -1> } - A Promise that resolves when the operation is complete or -1 if the link already exists.
  */
 const writeLink = async (newLink: Link): Promise<void | -1> => {
-	const postLink = dataDB.get("links").find({ link_id: newLink.link_id }).value();
+	dataDB.get("links").push(newLink).write();
+};
 
-	if (postLink) {
-		return -1;
-	} else {
-		dataDB.get("links").push(newLink).write();
-	}
+/**
+ * getLink()
+ * ======================
+ * Gets a link from database
+ * @param { Link } newLink - The link object to be found
+ *
+ * @return { Promise<Link | null> } -
+ */
+const getLink = (newLink: Link): Link | null => {
+	return dataDB.get("links").find({ post_id: newLink.post_id, user_id: newLink.user_id }).value();
 };
 
 /**
@@ -265,4 +271,5 @@ export {
 	getPosts,
 	Post,
 	writeLink,
+	getLink,
 };

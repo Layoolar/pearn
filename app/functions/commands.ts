@@ -9,19 +9,21 @@ import {
 	getUser,
 	getAdmin,
 	getUserData,
+	getLink,
 } from "@app/functions/databases";
 import config from "@configs/config";
 import { launchPolling, launchWebhook } from "./launcher";
 import { checkTweet, fetchTweet } from "@app/functions/twit";
-import { extractId, getPostIdentifier, parseSetPostCommand } from "@app/functions/utils";
+import { extractId, extractUsername, getPostIdentifier, parseSetPostCommand } from "@app/functions/utils";
 import { buttons } from "./actions";
-import { welcomeMessage, initialWelcomeMessage } from "./messages";
+import { welcomeMessage, initialWelcomeMessage, breakdownMessage } from "./messages";
 import {
 	useAdminMiddleware,
 	updateAdminMiddleware,
 	isValidUserMiddleware,
 	useSubmittedTwitterMiddleware,
 } from "./middlewares";
+import scheduleNewJob from "./scheduler";
 
 let data = {
 	id_str: "1234567890123456789",
@@ -35,12 +37,18 @@ let data = {
 	},
 };
 
+// Updates
+bot.on("new_chat_members", updateAdminMiddleware, (ctx) => {
+	ctx.reply("Bot added to group");
+	return;
+});
+
 // Commands
 
 /**
  *
  */
-const addTwitter = (): void => {
+const addTwitter = async (): Promise<void> => {
 	bot.command("add_twitter", (ctx) => {
 		const exists = getUserData(ctx.from.id);
 		const username = ctx.message.text.split(" ")[1].trim();
@@ -59,7 +67,7 @@ const addTwitter = (): void => {
 /**
  *
  */
-const updateAdmins = (): void => {
+const updateAdmins = async (): Promise<void> => {
 	bot.command("update_admins", useAdminMiddleware, updateAdminMiddleware, (ctx) => {
 		ctx.replyWithHTML("<b>The admins have been updated successfully ✅.</b>");
 	});
@@ -68,7 +76,7 @@ const updateAdmins = (): void => {
 /**
  *
  */
-const menu = (): void => {
+const menu = async (): Promise<void> => {
 	bot.command("menu", isValidUserMiddleware, (ctx) => {
 		ctx.telegram.sendMessage(ctx.message.chat.id, "<b>Eddy Bot Menu</b>", {
 			reply_markup: buttons.reply_markup,
@@ -119,7 +127,6 @@ const setPost = async (): Promise<void | never> => {
  */
 const submit = async (): Promise<void> => {
 	bot.command("submit", isValidUserMiddleware, useSubmittedTwitterMiddleware, async (ctx) => {
-		let tweet;
 		const link = ctx.update.message.text.split(" ")[1];
 		if (!link) {
 			ctx.reply("Please provide a valid twitter link using /submit [your_link]");
@@ -135,20 +142,6 @@ const submit = async (): Promise<void> => {
 			ctx.reply("You need to reply to the post with the /submit [Your twitter post link] command");
 			return;
 		}
-		// TODO: Verify the validity of the post here
-		try {
-			tweet = await fetchTweet(tweetId);
-			// console.log("Tweet Data:", tweet);
-			// Continue with the logic for successful tweet retrieval
-		} catch (error) {
-			// TODO: Take care of response and send to the user
-			// console.error("Error fetching tweet:", error);
-			// return;
-		}
-
-		if (tweet) {
-			data = tweet;
-		}
 		const repliedMessageText = (repliedMessage as { text: string }).text;
 		const repliedMessageId = getPostIdentifier(repliedMessageText);
 		if (!repliedMessageId) {
@@ -157,41 +150,89 @@ const submit = async (): Promise<void> => {
 		}
 		const postData = getPost(repliedMessageId);
 		if (!postData) {
-			ctx.reply("Post does not exist or has been deleted");
+			ctx.reply("Post does not exist or has been deleted or has expired");
 			return;
 		}
-		const { tweet_found, total_hashtags, total_keywords, hashtags_found, keywords_found, points } = checkTweet(
-			data,
-			postData,
-		);
-		if (!tweet_found) {
-			const msg = `<b>We could not find the tweet with the link you posted</b>`;
-			ctx.telegram.sendMessage(ctx.message.chat.id, msg, { parse_mode: "HTML" });
-		} else {
-			if (
-				(await writeLink({
-					link_id: tweetId,
-					post_id: repliedMessageId,
-					user_id: ctx.from.id,
-					url: link,
-				})) === -1
-			) {
-				ctx.reply("This link has already been submitted previously");
-				return;
-			}
-			writePoint(ctx.update.message.from.id, points);
-			const msg = `<b>Your tweet has been submitted and checked!</b>
-
-					🌟 <i>You've been assigned ${points} out of ${total_keywords + total_hashtags} points for your post.</i>
-
-					<b>Here is a breakdown of your tweet</b>
-					<i>${hashtags_found} of ${total_hashtags} given hashtag${total_hashtags === 1 ? "" : "s"} were found in your tweet</i>
-					<i>${keywords_found} of ${total_keywords} given keyword${total_keywords === 1 ? "" : "s"} were found in your tweet</i>
-
-					To check your total points, click the <b>My points</b> button`;
-
-			ctx.telegram.sendMessage(ctx.message.chat.id, msg, { parse_mode: "HTML" });
+		const userData = getUserData(ctx.from.id);
+		if (!userData) {
+			ctx.reply("You need to provide your twitter username to Eddy");
+			return;
 		}
+		if (userData.twitter_username !== extractUsername(link)) {
+			ctx.reply("You can only submit your own links.");
+			return;
+		}
+		const linkPostedPreviously = getLink({
+			link_id: tweetId,
+			post_id: repliedMessageId,
+			user_id: ctx.from.id,
+			url: link,
+		});
+
+		if (linkPostedPreviously) {
+			ctx.reply("This link has been submitted previously");
+			return;
+		}
+
+		ctx.replyWithHTML(
+			`<b>Your link has been submitted, your tweet would be awareded points at the end of the raid</b>`,
+		);
+
+		scheduleNewJob(
+			ctx.from.id,
+			async () => {
+				let tweet;
+				// TODO: Verify the validity of the post here
+				try {
+					tweet = await fetchTweet(tweetId);
+					// console.log("Tweet Data:", tweet);
+					// Continue with the logic for successful tweet retrieval
+				} catch (error) {
+					// TODO: Take care of response and send to the user
+					// console.error("Error fetching tweet:", error);
+					// return;
+				}
+				if (tweet) {
+					data = tweet;
+				}
+
+				const {
+					tweet_found,
+					total_hashtags,
+					total_keywords,
+					hashtags_found,
+					keywords_found,
+					points,
+					total_points,
+				} = checkTweet(data, postData);
+				if (!tweet_found) {
+					const msg = `<b>We could not find the tweet with the link you posted</b>`;
+					ctx.telegram.sendMessage(ctx.message.chat.id, msg, { parse_mode: "HTML" });
+				} else {
+					writeLink({
+						link_id: tweetId,
+						post_id: repliedMessageId,
+						user_id: ctx.from.id,
+						url: link,
+					});
+					writePoint(ctx.update.message.from.id, points);
+
+					ctx.telegram.sendMessage(
+						ctx.message.chat.id,
+						breakdownMessage({
+							total_hashtags,
+							total_keywords,
+							hashtags_found,
+							keywords_found,
+							points,
+							total_points,
+						}),
+						{ parse_mode: "HTML" },
+					);
+				}
+			},
+			new Date(Date.now() + 60 * 1000),
+		);
 	});
 };
 

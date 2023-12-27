@@ -12,6 +12,7 @@ type TweetCheckData = {
 	hashtags_found: number;
 	keywords_found: number;
 	points: number;
+	total_points: number;
 };
 
 /**
@@ -70,6 +71,7 @@ const checkTweet = (tweet: Tweet | null, post: Post): TweetCheckData => {
 		hashtags_found: 0,
 		keywords_found: 0,
 		points: 0,
+		total_points: post_points,
 	};
 
 	if (!tweet) {
@@ -86,17 +88,13 @@ const checkTweet = (tweet: Tweet | null, post: Post): TweetCheckData => {
 		return tagsArray.indexOf(item) !== -1;
 	});
 	if (countHashtags.length) {
-		data.points += 1 * countHashtags.length;
+		data.points += (post_points / (data.total_hashtags + data.total_keywords)) * countHashtags.length;
 		data.hashtags_found = countHashtags.length;
 	}
 	const countKeywords = keywords.filter((keyword) => tweet.full_text.toLowerCase().includes(keyword.toLowerCase()));
 	if (countKeywords.length) {
-		data.points += 1 * countKeywords.length;
+		data.points += (post_points / (data.total_hashtags + data.total_keywords)) * countKeywords.length;
 		data.keywords_found = countKeywords.length;
-	}
-
-	if (data.points > 0) {
-		data.points = Math.round((data.points / (data.total_hashtags + data.total_keywords)) * post_points);
 	}
 
 	return data;

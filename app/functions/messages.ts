@@ -58,10 +58,11 @@ const formatMessage = `
 <b>Format</b>
 
 \`\`\`
-/set_post # SetPost
+/set_post
 Tweet: "Hey friends, I am excited to announce a new project 💪🔥💻. I will be using #nodejs #typescript #firebase @firebasehq and #react @react"
 Keywords: new, project, announce, friends
 Hashtags: #nodejs, #typescript, #react, #firebase, #coding
+Points: 2
 \`\`\`
 
 <b>Note</b>
@@ -70,4 +71,30 @@ Hashtags: #nodejs, #typescript, #react, #firebase, #coding
 - Hashtags: hashtag1, hashtag2 must contain the # sign.
 `;
 
-export { commands, helpMessage, initialWelcomeMessage, welcomeMessage, formatMessage };
+const breakdownMessage = ({
+	total_hashtags,
+	total_keywords,
+	hashtags_found,
+	keywords_found,
+	points,
+	total_points,
+}: {
+	total_hashtags: number;
+	total_keywords: number;
+	hashtags_found: number;
+	keywords_found: number;
+	points: number;
+	total_points: number;
+}): string => {
+	return `<b>Your tweet has been submitted and checked!</b>
+
+					🌟 <i>You've been assigned ${points} out of ${total_points} points for your post.</i>
+
+					<b>Here is a breakdown of your tweet</b>
+					<i>${hashtags_found} of ${total_hashtags} given hashtag${total_hashtags === 1 ? "" : "s"} were found in your tweet</i>
+					<i>${keywords_found} of ${total_keywords} given keyword${total_keywords === 1 ? "" : "s"} were found in your tweet</i>
+
+					To check your total points, click the <b>My points</b> button`;
+};
+
+export { commands, helpMessage, initialWelcomeMessage, welcomeMessage, formatMessage, breakdownMessage };
