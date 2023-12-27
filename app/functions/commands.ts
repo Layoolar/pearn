@@ -16,7 +16,7 @@ import { launchPolling, launchWebhook } from "./launcher";
 import { checkTweet, fetchTweet } from "@app/functions/twit";
 import { extractId, extractUsername, getPostIdentifier, parseSetPostCommand } from "@app/functions/utils";
 import { buttons } from "./actions";
-import { welcomeMessage, initialWelcomeMessage, breakdownMessage } from "./messages";
+import { welcomeMessage, initialWelcomeMessage, breakdownMessage, formatMessage, adminCommand } from "./messages";
 import {
 	useAdminMiddleware,
 	updateAdminMiddleware,
@@ -44,6 +44,44 @@ bot.on("new_chat_members", updateAdminMiddleware, (ctx) => {
 });
 
 // Commands
+
+const test = async (): Promise<void> => {
+	bot.command("test", useAdminMiddleware, async (ctx) => {
+		ctx.reply("You found the test command");
+	});
+};
+
+const format = async (): Promise<void> => {
+	bot.command("format", useAdminMiddleware, (ctx) => {
+		ctx.replyWithHTML(formatMessage);
+	});
+};
+
+const adminGuide = async (): Promise<void> => {
+	bot.command("guide", useAdminMiddleware, (ctx) => {
+		if (ctx.chat.type === "private") {
+			ctx.replyWithHTML(adminCommand);
+		} else {
+			ctx.replyWithHTML("<b>You need to send this command privately to Eddy</b>");
+		}
+	});
+};
+
+const quit = async (): Promise<void> => {
+	bot.command("quit", useAdminMiddleware, async (ctx) => {
+		if (ctx.chat && ctx.chat.type !== "private") {
+			const admins = await ctx.getChatAdministrators();
+			const user = admins.find((e) => {
+				if (ctx.from && e.user.id == ctx.from.id) {
+					return e;
+				}
+			});
+			if (user && user.status == "creator") {
+				ctx.leaveChat();
+			}
+		}
+	});
+};
 
 /**
  *
@@ -274,5 +312,5 @@ const launch = async (): Promise<void> => {
 	}
 };
 
-export { launch, start, menu, addTwitter, setPost, submit, updateAdmins };
+export { launch, start, menu, test, format, adminGuide, quit, addTwitter, setPost, submit, updateAdmins };
 export default launch;

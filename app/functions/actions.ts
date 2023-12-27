@@ -1,14 +1,12 @@
 import { dataDB, getPosts } from "@app/functions/databases";
 import { isValidUserMiddleware, useAdminMiddleware } from "./middlewares";
 import bot from "@app/functions/telegraf";
-import { formatMessage, helpMessage } from "./messages";
+import { helpMessage } from "./messages";
 import { Markup } from "telegraf";
 
 export const buttons = Markup.inlineKeyboard([
 	[Markup.button.callback("Today's posts", "todays_post"), Markup.button.callback("My points", "points")],
-	[Markup.button.callback("Submit wallet", "wallet")],
-	[Markup.button.callback("Post format", "format"), Markup.button.callback("Help", "help")],
-	[Markup.button.callback("Test", "test"), Markup.button.callback("Quit", "quit")],
+	[Markup.button.callback("Submit wallet", "wallet"), Markup.button.callback("Help", "help")],
 ]);
 // Button actions
 
@@ -51,33 +49,11 @@ bot.action("points", isValidUserMiddleware, (ctx) => {
 	}
 });
 
-bot.action("format", useAdminMiddleware, (ctx) => {
-	ctx.replyWithHTML(formatMessage);
-});
-
-bot.action("test", useAdminMiddleware, async (ctx) => {
-	ctx.reply("You found the test command");
-});
-
 bot.action("help", isValidUserMiddleware, (ctx) => {
 	if (ctx.chat) {
 		ctx.telegram.sendMessage(ctx.chat.id, helpMessage, {
 			reply_markup: buttons.reply_markup,
 			parse_mode: "HTML",
 		});
-	}
-});
-
-bot.action("quit", useAdminMiddleware, async (ctx) => {
-	if (ctx.chat && ctx.chat.type !== "private") {
-		const admins = await ctx.getChatAdministrators();
-		const user = admins.find((e) => {
-			if (ctx.from && e.user.id == ctx.from.id) {
-				return e;
-			}
-		});
-		if (user && user.status == "creator") {
-			ctx.leaveChat();
-		}
 	}
 });

@@ -10,28 +10,35 @@ const commands = `
 - <b>/add_twitter</b>
    - <i>Description:</i> Submit your twitter username to Eddy.
 
-- <b>/set_post [Your Message]</b> 🖋️ (Admin Only)
-  - <i>Description:</i> Admins can use this command to set the post that will be shared with users using /todays_post. Click <b>Post format</b> for more info.
-
 - <b>/submit [Your twitter post link]</b> 🖋️
   - <i>Description:</i> Post your tweet link here and receive points after Eddy has checked and verified it.
-
-- <b>/update_admins</b> 🖋️
-  - <i>Description:</i> Inform Eddy that a new administator has been added.
-
-- <b>Help</b> ℹ️
-  - <i>Description:</i> Get assistance and discover all the amazing features of Eddy.
 
 - <b>Today's posts</b> 📢
   - <i>Description:</i> Get the latest post of the day. Admins can set it using the <b>/set_post</b> command.
 
-- <b>Format</b>
-  - <i>Description:</i> Check this format for your today's post.
-
 - <b>My points</b> 🖋️
   - <i>Description:</i> Check your total post points here.
 
-- <b>Quit</b> 🚪 (Admin Only)
+- <b>Help</b> ℹ️
+  - <i>Description:</i> Get assistance and discover all the amazing features of Eddy.
+`;
+
+const adminCommand = `
+<b>Admin guide</b>
+
+- <b>/guide</b>
+  - <i>Description:</i> Display admin commands
+
+- <b>/format</b>
+  - <i>Description:</i> Check this format for your today's post.
+
+- <b>/set_post [Your Message]</b> 🖋️ (Admin Only)
+  - <i>Description:</i> Admins can use this command to set the post that will be shared with users using /todays_post. Use <b>/format</b> for more info.
+
+- <b>/update_admins</b> 🖋️
+  - <i>Description:</i> Inform Eddy that a new administator has been added.
+
+- <b>/quit</b> 🚪 (Admin Only)
   - <i>Description:</i> Admins can use this command to make Eddy leave a group or channel.
 `;
 
@@ -97,4 +104,4 @@ const breakdownMessage = ({
 					To check your total points, click the <b>My points</b> button`;
 };
 
-export { commands, helpMessage, initialWelcomeMessage, welcomeMessage, formatMessage, breakdownMessage };
+export { commands, helpMessage, initialWelcomeMessage, welcomeMessage, formatMessage, breakdownMessage, adminCommand };
