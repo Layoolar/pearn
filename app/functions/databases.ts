@@ -12,46 +12,50 @@ import configs from "@configs/config";
 import lowdb from "lowdb";
 import lowdbFileSync from "lowdb/adapters/FileSync";
 
-interface UserData {
-	user_id: number;
-	twitter_username: string;
-}
-interface Admin {
+type ChatData = {
+	chat_id: string | number;
+	chat_title?: string;
+	isRaidOn: boolean;
+};
+
+type Admin = {
 	chat_id: string | number;
 	user_id: number;
-	status: "creator" | "administrator" | "member" | "restricted" | "left" | "kicked";
-}
+	status?: "creator" | "administrator" | "member" | "restricted" | "left" | "kicked";
+};
 
-interface Post {
+type Post = {
 	post_id: number;
 	admin_id: number;
+	post_link: string;
 	full_text: string;
 	post_points: number;
 	entities: {
 		hashtags: string[];
 		keywords: string[];
 	};
-}
+};
 
-interface Point {
+type Point = {
 	user_id: number;
 	points: number;
-}
+};
 
-interface Link {
+type Link = {
 	link_id: string;
 	post_id: number;
 	user_id: number;
 	url: string;
-}
-interface DatabaseSchema {
+};
+
+type DatabaseSchema = {
 	users: TelegramUserInterface[];
-	users_data: UserData[];
+	chat_data: ChatData[];
 	admins: Admin[];
 	points: Point[];
 	posts: Post[];
 	links: Link[];
-}
+};
 
 const usersAdapter = new lowdbFileSync<DatabaseSchema>(configs.databases.users);
 const dataAdapter = new lowdbFileSync<DatabaseSchema>(configs.databases.data);
@@ -60,7 +64,7 @@ const usersDB = lowdb(usersAdapter);
 const dataDB = lowdb(dataAdapter);
 
 usersDB.defaults({ users: [] }).write();
-dataDB.defaults({ users_data: [], admins: [], points: [], posts: [], links: [] }).write();
+dataDB.defaults({ chat_data: [], admins: [], points: [], posts: [], links: [] }).write();
 
 /**
  * writeUser()
@@ -85,44 +89,42 @@ const writeUser = async (json: TelegramUserInterface): Promise<void> => {
 };
 
 /**
- * @param { TelegramUserInterface } user - A user object
+ * @param { number } id - A user object
  *
  * @return { TelegramUserInterface | null } - A user object or null
  */
-const getUser = (user: TelegramUserInterface): TelegramUserInterface | null => {
-	return usersDB.get("users").find({ id: user.id }).value();
+const getUser = (id: number): TelegramUserInterface | null => {
+	return usersDB.get("users").find({ id }).value();
 };
 
 /**
- * writeUserData()
- * ===================
- * Write user information to database
+ * writeChatData()
+ * =====================
+ * Writes chat data to database
  *
- * @param { UserData } data - user informatio object
+ * @param { ChatData } chat_data - The data object to be written to the database.
  *
- * @return { Promise<void> }
+ * @return { Promise<void> } - A Promise that resolves when the operation is complete.
  */
-const writeUserData = async (data: UserData): Promise<void> => {
-	const user_id = dataDB.get("users_data").find({ user_id: data.user_id }).value();
-
-	if (user_id) {
-		dataDB.get("users_data").find({ user_id: data.user_id }).assign(data).write();
+const writeChatData = async (chat_data: ChatData): Promise<void> => {
+	const exists = dataDB.get("chat_data").find({ chat_id: chat_data.chat_id }).value();
+	if (exists) {
+		dataDB.get("chat_data").find({ chat_id: chat_data.chat_id }).assign(chat_data).write();
 	} else {
-		dataDB.get("users_data").push(data).write();
+		dataDB.get("chat_data").push(chat_data).write();
 	}
 };
 
 /**
- * getUserData()
- * =====================
- * Get user information from the database
+ * getChatData()
+ * ======================
+ * Gets chat data from database
+ * @param { string | number} chat_id - The chat id
  *
- * @param {number} user_id - user id
- *
- * @return {UserData | null} - An user data object or null
+ * @return { Promise<ChatData | null> } -
  */
-const getUserData = (user_id: number): UserData | null => {
-	return dataDB.get("users_data").find({ user_id }).value();
+const getChatData = (chat_id: string | number): ChatData | null => {
+	return dataDB.get("chat_data").find({ chat_id }).value();
 };
 
 /**
@@ -157,6 +159,19 @@ const writeAdmins = async (admin_data: Admin[]): Promise<void> => {
  */
 const getAdmin = (user_id: number): Admin | null => {
 	return dataDB.get("admins").find({ user_id }).value();
+};
+
+/**
+ * getAdminForChat()
+ * =====================
+ * Get admin information from the database
+ *
+ * @param {Admin} data - admin data
+ *
+ * @return {Admin | null} - An admin object or null
+ */
+const getAdminForChat = (data: Admin): Admin | null => {
+	return dataDB.get("admins").find(data).value();
 };
 
 /**
@@ -259,12 +274,13 @@ export {
 	usersDB,
 	dataDB,
 	Admin,
+	writeChatData,
+	getChatData,
 	writeUser,
 	getUser,
-	writeUserData,
-	getUserData,
 	writeAdmins,
 	getAdmin,
+	getAdminForChat,
 	writePoint,
 	writePost,
 	getPost,

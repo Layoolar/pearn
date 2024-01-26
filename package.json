@@ -56,8 +56,6 @@
 		"prepare": "ts-patch install -s"
 	},
 	"dependencies": {
-		"@types/node-schedule": "^2.1.5",
-		"@types/twit": "^2.2.35",
 		"express": "^4.17.1",
 		"localtunnel": "^2.0.2",
 		"lowdb": "^1.0.0",
@@ -72,7 +70,9 @@
 		"@types/localtunnel": "^2.0.1",
 		"@types/lowdb": "^1.0.9",
 		"@types/node": "^15.0.1",
+		"@types/node-schedule": "^2.1.5",
 		"@types/shelljs": "^0.8.8",
+		"@types/twit": "^2.2.35",
 		"@typescript-eslint/eslint-plugin": "^4.22.0",
 		"@typescript-eslint/parser": "^4.22.0",
 		"all-contributors-cli": "^6.20.0",

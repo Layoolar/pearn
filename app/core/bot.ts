@@ -13,14 +13,9 @@ import * as hears from "@app/functions/hears";
 (async () => {
 	await command.start();
 	await command.menu();
-	await command.test();
-	await command.format();
-	await command.adminGuide();
-	await command.quit();
-	await command.addTwitter();
-	await command.setPost();
+	await command.startRaid();
 	await command.submit();
-	await command.updateAdmins();
-	await hears.text();
+	await command.test();
+	// await hears.text();
 	await command.launch();
 })();

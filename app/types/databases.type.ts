@@ -76,4 +76,15 @@ export interface TelegramUserInterface {
 	 *
 	 */
 	language_code?: string;
+
+	/**
+	 * User Interface
+	 * =====================
+	 *
+	 * @interface [TelegramUserInterface](https://github.com/ptkdev-boilerplate/node-telegram-bot-boilerplate/blob/main/app/webcomponent/types/databases.type.ts)
+	 *
+	 * @param { string } twitter_username - user code language from OS
+	 *
+	 */
+	twitter_username?: string;
 }

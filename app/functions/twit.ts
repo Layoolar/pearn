@@ -53,6 +53,95 @@ const fetchTweet = (tweetId: string): Promise<Tweet | null> => {
 	});
 };
 
+const fetchComment = async (link?: string): Promise<void> => {
+	if (link) {
+		return new Promise((resolve) => resolve());
+	}
+	return new Promise((_, reject) => reject());
+};
+
+/**
+ * Fetch comments from the provided links, respecting a minimum time interval between requests.
+ * @param {string[]} links - An array of comment links to fetch.
+ */
+const fetchComments = async (links: string[]): Promise<void> => {
+	const desiredTimeInterval = 4000;
+	let lastRequestTimestamp = Date.now();
+
+	for (const link of links) {
+		const currentTimestamp = Date.now();
+		const timeElapsed = currentTimestamp - lastRequestTimestamp;
+
+		if (timeElapsed < desiredTimeInterval) {
+			const delay = desiredTimeInterval - timeElapsed;
+			await wait(delay);
+		}
+
+		try {
+			await fetchComment(link);
+			console.log("\u001b[38:5:82m", `Fetching comment from link: ${link}`, "\u001b[0m");
+		} catch (error) {
+			console.error("\u001b[38:5:160m", `Error fetching comment for link: ${link}`, "\u001b[0m");
+			continue; // Continue to the next link in case of error
+		}
+
+		lastRequestTimestamp = Date.now();
+	}
+};
+
+/**
+ * wait - delays a request
+ * Utility function to wait for the specified amount of time.
+ * @param {number} ms - The number of milliseconds to wait.
+ *
+ * @return {Promise<void>}
+ */
+const wait = (ms: number): Promise<void> => {
+	console.log("\u001b[48:5:129m", "Request throttling...", "\u001b[0m");
+	return new Promise<void>((resolve) => setTimeout(resolve, ms));
+};
+
+/**
+ *
+ */
+// const fetchComment = (): void => {
+// 	const tweetLink = "https://twitter.com/user/status/1234567890123456789?comment_id=1234567890123456789";
+
+// 	const [, tweetId, commentId] = tweetLink.match(/status\/(\d+)\?comment_id=(\d+)/) || [];
+
+// 	twitterClient.get("statuses/show", { id: tweetId }, (err, tweetData, response) => {
+// 		if (err) {
+// 			console.error("Error fetching tweet:", err);
+// 			return;
+// 		}
+
+// 		// Fetch replies to the original tweet
+// 		twitterClient.get(
+// 			"search/tweets",
+// 			{ q: `to:${tweetData.user.screen_name}`, since_id: tweetId, count: 100 },
+// 			(err, searchData, response) => {
+// 				if (err) {
+// 					console.error("Error fetching replies:", err);
+// 					return;
+// 				}
+
+// 				// Find the specific comment
+// 				const replies = searchData.statuses;
+// 				const comment = replies.find(
+// 					(reply) => reply.in_reply_to_status_id_str === tweetId && reply.id_str === commentId,
+// 				);
+
+// 				if (comment) {
+// 					console.log("Comment:", comment.text);
+// 					// Process and send the comment to your Telegraf bot users
+// 				} else {
+// 					console.log("Comment not found.");
+// 				}
+// 			},
+// 		);
+// 	});
+// };
+
 /**
  *
  * @param {Tweet} tweet - tweet param
@@ -100,4 +189,4 @@ const checkTweet = (tweet: Tweet | null, post: Post): TweetCheckData => {
 	return data;
 };
 
-export { fetchTweet, checkTweet };
+export { fetchTweet, fetchComments, checkTweet };

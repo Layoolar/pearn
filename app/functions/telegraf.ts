@@ -7,10 +7,13 @@
  * @license: MIT License
  *
  */
-import { Telegraf } from "telegraf";
+import { Context, Telegraf } from "telegraf";
 import configs from "@configs/config";
 
+interface CustomContext extends Context {
+	chat_id?: string;
+}
 const bot = new Telegraf(configs.telegram.token);
 
-export { bot };
+export { bot, CustomContext };
 export default bot;

@@ -6,7 +6,6 @@ interface UserJob {
 }
 
 const jobs: UserJob[] = [];
-
 const scheduledTime = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
 /**
@@ -25,7 +24,7 @@ const scheduledTime = new Date(Date.now() + 24 * 60 * 60 * 1000);
  *   console.log("Job executed!");
  * });
  */
-const scheduleNewJob = (userId: number, callback: () => void, time: Date = scheduledTime): void => {
+const scheduleNewJob = (userId: number, callback: () => Promise<void>, time: Date = scheduledTime): void => {
 	let userJob = jobs.find((user) => user.userId === userId);
 
 	if (!userJob) {
