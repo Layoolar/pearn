@@ -1,6 +1,6 @@
 import { getAdmin, getChatData, getUser } from "@app/functions/databases";
-import config from "@configs/config";
 import bot from "@app/functions/telegraf";
+import config from "@configs/config";
 import { Context, MiddlewareFn } from "telegraf";
 import { updateAdminFn } from "@app/functions/shared";
 
@@ -16,9 +16,11 @@ const loggingMiddleware: MiddlewareFn<Context> = (ctx, next) => {
 	const ut = ctx.updateType;
 	const { log } = console;
 
+	// Check if the context is an Update with a message
 	if ("message" in ctx.update && "text" in ctx.update.message) {
 		const command = ctx.update.message?.text;
 
+		// Log incoming requests
 		log(
 			"\u001b[38:5:45m",
 			`[${timestamp()}] UT-[${ut}] Request from ${username || "UnknownUser"} (ID: ${userId}) in chat ${chatId}: ${
@@ -27,6 +29,7 @@ const loggingMiddleware: MiddlewareFn<Context> = (ctx, next) => {
 			"\u001b[0m",
 		);
 	} else {
+		// Handle other types of updates if needed
 		log("\u001b[48:5:202m", `Received an update UT-[${ut}]`, "\u001b[0m");
 		log(
 			"\u001b[38:5:45m",
@@ -79,7 +82,7 @@ const isCreatorMiddleware: MiddlewareFn<Context> = (ctx, next) => {
 };
 
 // Middleware to check if user is admin
-const isAdminMiddleware: MiddlewareFn<Context> = (ctx, next) => {
+const useAdminMiddleware: MiddlewareFn<Context> = (ctx, next) => {
 	if (ctx.from) {
 		const admin = getAdmin(ctx.from.id);
 		if (admin) {
@@ -117,14 +120,13 @@ const isRaidOnMiddleware: MiddlewareFn<Context> = (ctx, next) => {
 	}
 };
 
-bot.use(loggingMiddleware);
+bot.use(loggingMiddleware, isValidUserMiddleware);
 
 export {
-	bot,
 	isFromAuthorizedGroupMiddleware,
 	isValidUserMiddleware,
 	updateAdminMiddleware,
-	isAdminMiddleware,
+	useAdminMiddleware,
 	isCreatorMiddleware,
 	useSubmittedTwitterMiddleware,
 	isRaidOnMiddleware,

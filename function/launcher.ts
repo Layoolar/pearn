@@ -7,7 +7,7 @@
  * @license: MIT License
  *
  */
-import bot from "@app/functions/telegraf";
+import bot from "../functions/telegraf";
 import config from "@configs/config";
 import fs from "fs";
 import localtunnel from "localtunnel";

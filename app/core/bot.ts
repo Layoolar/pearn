@@ -1,5 +1,7 @@
 import * as command from "@app/functions/commands";
-import * as hears from "@app/functions/hears";
+
+// path of bot instance
+// telegraf -> middlewares -> wizard -> actions -> commands -> bot.ts
 
 /**
  * Start bot
@@ -12,10 +14,9 @@ import * as hears from "@app/functions/hears";
  */
 (async () => {
 	await command.start();
+	await command.adminMenu();
 	await command.menu();
-	await command.startRaid();
-	await command.submit();
-	await command.test();
-	// await hears.text();
+	await command.quit();
+
 	await command.launch();
 })();

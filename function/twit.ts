@@ -79,9 +79,9 @@ const fetchComments = async (links: string[]): Promise<void> => {
 
 		try {
 			await fetchComment(link);
-			console.log("\u001b[38:5:82m", `Fetching comment from link: ${link}`, "\u001b[0m");
+			// console.log("\u001b[38:5:82m", `Fetching comment from link: ${link}`, "\u001b[0m");
 		} catch (error) {
-			console.error("\u001b[38:5:160m", `Error fetching comment for link: ${link}`, "\u001b[0m");
+			// console.error("\u001b[38:5:160m", `Error fetching comment for link: ${link}`, "\u001b[0m");
 			continue; // Continue to the next link in case of error
 		}
 
@@ -97,50 +97,9 @@ const fetchComments = async (links: string[]): Promise<void> => {
  * @return {Promise<void>}
  */
 const wait = (ms: number): Promise<void> => {
-	console.log("\u001b[48:5:129m", "Request throttling...", "\u001b[0m");
+	// console.log("\u001b[48:5:129m", "Request throttling...", "\u001b[0m");
 	return new Promise<void>((resolve) => setTimeout(resolve, ms));
 };
-
-/**
- *
- */
-// const fetchComment = (): void => {
-// 	const tweetLink = "https://twitter.com/user/status/1234567890123456789?comment_id=1234567890123456789";
-
-// 	const [, tweetId, commentId] = tweetLink.match(/status\/(\d+)\?comment_id=(\d+)/) || [];
-
-// 	twitterClient.get("statuses/show", { id: tweetId }, (err, tweetData, response) => {
-// 		if (err) {
-// 			console.error("Error fetching tweet:", err);
-// 			return;
-// 		}
-
-// 		// Fetch replies to the original tweet
-// 		twitterClient.get(
-// 			"search/tweets",
-// 			{ q: `to:${tweetData.user.screen_name}`, since_id: tweetId, count: 100 },
-// 			(err, searchData, response) => {
-// 				if (err) {
-// 					console.error("Error fetching replies:", err);
-// 					return;
-// 				}
-
-// 				// Find the specific comment
-// 				const replies = searchData.statuses;
-// 				const comment = replies.find(
-// 					(reply) => reply.in_reply_to_status_id_str === tweetId && reply.id_str === commentId,
-// 				);
-
-// 				if (comment) {
-// 					console.log("Comment:", comment.text);
-// 					// Process and send the comment to your Telegraf bot users
-// 				} else {
-// 					console.log("Comment not found.");
-// 				}
-// 			},
-// 		);
-// 	});
-// };
 
 /**
  *
@@ -188,5 +147,48 @@ const checkTweet = (tweet: Tweet | null, post: Post): TweetCheckData => {
 
 	return data;
 };
+
+// /**
+//  * @param commentId
+//  */
+// const fetchComment = async (commentId: string): void => {
+// 	const tweetLink = "https://x.com/MailafiyaRache3/status/1679842261805195264?s=20";
+// 	// const tweetLink = "https://x.com/OdufaPeter/status/1679770684132671488?s=20";
+
+// 	// TODO fetch tweetId from database
+// 	const tweetId = "";
+
+// 	twitterClient.get("search/tweets", (err, data, response) => {
+// 		if (err) {
+// 			return;
+// 		}
+// 		console.log(data);
+// 		console.log(response);
+// 	});
+
+// const tweet = tweetDetails[0];
+// const conversationId = tweet.conversation_id;
+
+// // Fetch conversation thread using conversation ID
+// const { data: conversation } = await twitterClient.get("tweets/search/recent", {
+// 	query: `conversation_id:${conversationId}`,
+// 	tweet_fields: "created_at,author_id",
+// 	expansions: "author_id",
+// });
+
+// // Find the comment in the conversation
+// const comment = conversation.data.find((tweet: any) => tweet.id !== tweetId);
+// if (!comment) {
+// 	console.error("Comment not found in the conversation");
+// 	return;
+// }
+
+// // Construct and return the tweet comment object
+// const tweetComment: TweetComment = {
+// 	text: comment.text,
+// 	author: comment.author_id,
+// 	createdAt: comment.created_at,
+// };
+// };
 
 export { fetchTweet, fetchComments, checkTweet };

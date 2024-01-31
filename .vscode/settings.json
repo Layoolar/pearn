@@ -38,9 +38,9 @@
 	"todo-tree.highlights.customHighlight": {
 		"TODO": {
 			"foreground": "black",
-			"background": "#82AAFF",
+			"background": "#7dd3fc",
 			"icon": "tag",
-			"iconColour": "#82AAFF",
+			"iconColour": "#7dd3fc",
 			"gutterIcon": true
 		},
 		"BUG": {

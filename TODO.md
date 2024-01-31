@@ -7,7 +7,16 @@
 // TODO 9 Add edit link button for users to change their links within raid period and also a confirmation button.
 // TODO 10 Add GPT AI to compose comments based on hashtags and keywords
 
+// FIXME Ensure chat gpt gives context
+// FIXME Make sure to check if # is in the hashtags
+// FIXME Button
+// FIXME Show number of people that joined the raid
+// FIXME Sample comment for GPT
+// FIXME Twitter usernames must start with '@'
+
+// TODO use wizard for twitter username
+
 Done
 // 1 Implement queue system for posts and requests
 // 6 Raid is 15mins, adjust accordingly, open submit route when admin drops first message and set timer and close when raid ends
-
+// FIXME Leaderboard system - leave admins and creators off it

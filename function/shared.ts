@@ -1,6 +1,6 @@
 import config from "@configs/config";
 import { Context } from "telegraf";
-import { writeAdmins } from "@app/functions/databases";
+import { writeAdmins } from "./databases";
 import { ChatMember } from "telegraf/typings/core/types/typegram";
 
 /**
@@ -16,6 +16,15 @@ const updateAdminFn = async (ctx: Context): Promise<ChatMember[]> => {
 	});
 	writeAdmins(admins_data);
 	return admins;
+};
+
+/**
+ * @param ctx
+ */
+const submitFn = async (ctx: Context): Promise<void> => {
+	// TODO extract tweetId and commentId from
+	// TODO check if tweetId matches mother post id
+	// TODO save comment link
 };
 
 export { updateAdminFn };

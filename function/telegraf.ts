@@ -36,5 +36,5 @@ bot.catch((err: unknown, ctx: WizardContext) => {
 	ctx.reply("An error occurred while processing your request.");
 });
 
-export { WizardContext };
+export { bot, WizardContext };
 export default bot;

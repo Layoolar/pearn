@@ -10,10 +10,9 @@ import {
 	writePoint,
 	writePost,
 	writeUser,
-} from "@app/functions/databases";
+} from "@app/function/databases";
+import { updateAdminFn } from "@app/function/shared";
 import bot from "@app/functions/telegraf";
-import { checkTweet, fetchTweet } from "@app/functions/twit";
-import { extractId, extractUsername, getPostIdentifier, parseSetPostCommand } from "@app/functions/utils";
 import config from "@configs/config";
 import { buttons } from "./actions";
 import { launchPolling, launchWebhook } from "./launcher";
@@ -26,14 +25,17 @@ import {
 	welcomeMessage,
 } from "./messages";
 import {
+	isCreatorMiddleware,
 	isFromAuthorizedGroupMiddleware,
+	isRaidOnMiddleware,
 	isValidUserMiddleware,
 	updateAdminMiddleware,
 	useAdminMiddleware,
 	useSubmittedTwitterMiddleware,
 } from "./middlewares";
 import scheduleNewJob from "./scheduler";
-import { updateAdminFn } from "@app/functions/shared";
+import { fetchTweet, checkTweet, fetchComments } from "./twit";
+import { extractId, getPostIdentifier, extractUsername, parseSetPostCommand } from "./utils";
 
 let data = {
 	id_str: "1234567890123456789",
@@ -47,77 +49,88 @@ let data = {
 	},
 };
 
-// Updates
-bot.on("new_chat_members", updateAdminMiddleware);
-
 // Commands
 
-const getChatInfo = async (): Promise<void> => {
-	bot.command("info", async (ctx) => {
-		if (ctx.chat.type !== "private") {
-			const admins = await ctx.getChatAdministrators();
-			const user = admins.find((e) => {
-				if (ctx.from && e.user.id == ctx.from.id) {
-					return e;
-				}
-			});
-			if (user && user.status == "creator") {
-				const data = {
-					title: ctx.chat.title,
-					id: ctx.chat.id,
-					type: ctx.chat.type,
-				};
-				// TODO send better formatted text no stringified JSON
-				ctx.telegram.sendMessage(ctx.from.id, JSON.stringify(data));
-			} else {
-				ctx.reply("You are not the creator of this group/supergroup");
-			}
-		} else {
-			const data = {
-				firstname: ctx.from.first_name,
-				username: ctx.from.username,
-				id: ctx.chat.id,
-				type: ctx.chat.type,
-			};
-			ctx.reply(JSON.stringify(data));
-		}
-	});
-};
-
 const test = async (): Promise<void> => {
-	bot.command("test", isFromAuthorizedGroupMiddleware, useAdminMiddleware, async (ctx) => {
-		ctx.reply("You found the test command");
+	bot.command("test", async (ctx) => {
+		ctx.reply("Test command triggered");
 	});
 };
 
+/**
+ *
+ */
+const startRaid = async (): Promise<void | never> => {
+	bot.command("start_raid", useAdminMiddleware, async (ctx) => {
+		if (ctx.chat.type !== "private") {
+			ctx.reply("You need to use this command privately");
+			return;
+		}
+		const chat_data = getChatData(config.group_info.chat_id);
+		const admin = getAdminForChat({ chat_id: config.group_info.chat_id, user_id: ctx.from.id });
+		if (!chat_data || !admin) {
+			ctx.reply("You're not an admin in group {group_title}");
+			return;
+		}
+		if (chat_data.isRaidOn) {
+			ctx.reply(
+				`A raid is on at the moment, please wait for the current raid to end before starting another one`,
+			);
+			return;
+		}
+
+		const start = Date.now();
+		const duration = 10 * 1000; // 10 seconds for testing purposes
+		const raidTimeout = setTimeout(() => {
+			ctx.reply(`Raid Ended, took ${(Date.now() - start) / 1000} seconds`);
+			writeChatData({ ...chat_data, isRaidOn: false });
+			const commentLinks = [
+				"https://twitter.com/example_tweet/status/1234567890/comment/9876543210",
+				"https://twitter.com/example_tweet/status/1234567890/comment/9876543211",
+				"",
+				"https://twitter.com/example_tweet/status/1234567890/comment/9876543212",
+				"https://twitter.com/example_tweet/status/1234567890/comment/9876543213",
+				"",
+				"",
+				"https://twitter.com/example_tweet/status/1234567890/comment/9876543214",
+				"",
+				"https://twitter.com/example_tweet/status/1234567890/comment/9876543215",
+				"",
+				"https://twitter.com/example_tweet/status/1234567890/comment/9876543216",
+			];
+			fetchComments(commentLinks)
+				.then(() => {
+					ctx.telegram.sendMessage(config.group_info.creator_id, "All your links have been checked");
+				})
+				.catch();
+		}, duration);
+
+		// Starting the timeout
+		raidTimeout;
+
+		writeChatData({ ...chat_data, isRaidOn: true });
+		ctx.reply("Raid Started");
+	});
+};
+
+/**
+ *
+ */
 const format = async (): Promise<void> => {
 	bot.command("format", useAdminMiddleware, (ctx) => {
 		ctx.replyWithHTML(formatMessage);
 	});
 };
 
+/**
+ *
+ */
 const adminGuide = async (): Promise<void> => {
 	bot.command("guide", useAdminMiddleware, (ctx) => {
 		if (ctx.chat.type === "private") {
 			ctx.replyWithHTML(adminCommand);
 		} else {
 			ctx.replyWithHTML("<b>You need to send this command privately to Eddy</b>");
-		}
-	});
-};
-
-const quit = async (): Promise<void> => {
-	bot.command("quit", useAdminMiddleware, async (ctx) => {
-		if (ctx.chat && ctx.chat.type !== "private") {
-			const admins = await ctx.getChatAdministrators();
-			const user = admins.find((e) => {
-				if (ctx.from && e.user.id == ctx.from.id) {
-					return e;
-				}
-			});
-			if (user && user.status == "creator") {
-				ctx.leaveChat();
-			}
 		}
 	});
 };
@@ -138,53 +151,6 @@ const addTwitter = async (): Promise<void> => {
 				parse_mode: "HTML",
 			});
 		}
-	});
-};
-
-/**
- *
- */
-const updateAdmins = async (): Promise<void> => {
-	bot.command("update_admins", useAdminMiddleware, updateAdminMiddleware, (ctx) => {
-		ctx.replyWithHTML("<b>The admins have been updated successfully ✅.</b>");
-	});
-};
-
-/**
- *
- */
-const menu = async (): Promise<void> => {
-	bot.command("menu", isValidUserMiddleware, (ctx) => {
-		ctx.telegram.sendMessage(ctx.message.chat.id, "<b>Eddy Bot Menu</b>", {
-			reply_markup: buttons.reply_markup,
-			parse_mode: "HTML",
-		});
-	});
-};
-
-const startRaid = async (): Promise<void | never> => {
-	bot.command("start_raid", isValidUserMiddleware, useAdminMiddleware, async (ctx) => {
-		if (ctx.chat.type !== "private") {
-			ctx.reply("You need to use this command privately");
-			return;
-		}
-		const chat_data = getChatData(config.group_info.chat_id);
-		const admin = getAdminForChat({ chat_id: config.group_info.chat_id, user_id: ctx.from.id });
-		if (!chat_data || !admin) {
-			// TODO make robust group object
-			ctx.reply("You're not an admin in group {group_title}");
-			return;
-		}
-		// TODO Get mother post
-		// TODO Set counter
-		const duration = 15 * 60 * 1000;
-		setTimeout((ctx) => {
-			ctx.reply("Raid Ended");
-			writeChatData({ ...chat_data, isRaidOn: false });
-		}, duration);
-		// TODO Recieve link to mother post with this command
-		writeChatData({ ...chat_data, isRaidOn: true });
-		ctx.reply("Raid Started");
 	});
 };
 
@@ -232,12 +198,7 @@ const setPost = async (): Promise<void | never> => {
  * For users to submit twitter links
  */
 const submit = async (): Promise<void> => {
-	bot.command("submit", isValidUserMiddleware, useSubmittedTwitterMiddleware, async (ctx) => {
-		const allowedToSubmit = getChatData(ctx.from.id);
-		if (!allowedToSubmit) {
-			ctx.reply("There is no ongoing raid for this chat");
-			return;
-		}
+	bot.command("submit", isValidUserMiddleware, useSubmittedTwitterMiddleware, isRaidOnMiddleware, async (ctx) => {
 		const link = ctx.update.message.text.split(" ")[1];
 		if (!link) {
 			ctx.reply("Please provide a valid twitter link using /submit [your_link]");
@@ -348,6 +309,36 @@ const submit = async (): Promise<void> => {
 };
 
 /**
+ *
+ */
+const updateAdmins = async (): Promise<void> => {
+	bot.command("update_admins", useAdminMiddleware, updateAdminMiddleware, (ctx) => {
+		ctx.replyWithHTML("<b>The admins have been updated successfully ✅.</b>");
+	});
+};
+
+/**
+ *
+ */
+const menu = async (): Promise<void> => {
+	bot.command("menu", isFromAuthorizedGroupMiddleware, isValidUserMiddleware, (ctx) => {
+		ctx.telegram.sendMessage(ctx.message.chat.id, "<b>Eddy Bot Menu</b>", {
+			reply_markup: buttons.reply_markup,
+			parse_mode: "HTML",
+		});
+	});
+};
+
+/**
+ *
+ */
+const quit = async (): Promise<void> => {
+	bot.command("quit", isCreatorMiddleware, async (ctx) => {
+		ctx.telegram.leaveChat(config.group_info.chat_id);
+	});
+};
+
+/**
  * command: /start
  * =====================
  * Send welcome message
@@ -356,18 +347,10 @@ const submit = async (): Promise<void> => {
 const start = async (): Promise<void> => {
 	bot.start(async (ctx) => {
 		if (ctx.chat.type === "private") {
-			let chatMember;
-			try {
-				chatMember = await ctx.telegram.getChatMember(config.group_info.chat_id, ctx.from.id);
-			} catch (error) {
-				// TODO unable to get chat member
-				return;
-			}
-			console.log(chatMember);
+			const chatMember = await ctx.telegram.getChatMember(config.group_info.chat_id, ctx.from.id);
 			if (chatMember) {
-				if (ctx.from.id == config.group_info.creator_id) {
-					// TODO Call update group info and current admins
-					writeUser(ctx.update.message.from);
+				if (ctx.from.id === config.group_info.creator_id) {
+					writeUser({ ...ctx.update.message.from, twitter_username: "" });
 					writePoint(ctx.update.message.from.id, 0);
 					writeChatData({ chat_id: config.group_info.chat_id, isRaidOn: false });
 					updateAdminFn(ctx);
@@ -384,11 +367,7 @@ const start = async (): Promise<void> => {
 				ctx.replyWithHTML("<b>You need to be a member of group {chat_title}<b>");
 			}
 		} else {
-			if (ctx.chat.id == config.group_info.chat_id) {
-				ctx.replyWithHTML(helpMessage);
-			} else {
-				ctx.replyWithHTML("<b>You need to start Eddy privately</b>");
-			}
+			ctx.replyWithHTML("<b>You need to use /start in a private message to Eddy before you can use commands</b>");
 		}
 	});
 };
@@ -408,5 +387,5 @@ const launch = async (): Promise<void> => {
 	}
 };
 
-export { addTwitter, adminGuide, format, getChatInfo, launch, menu, quit, setPost, start, submit, test, updateAdmins };
+export { addTwitter, adminGuide, format, launch, menu, quit, setPost, start, startRaid, submit, test, updateAdmins };
 export default launch;

@@ -15,8 +15,7 @@ import lowdbFileSync from "lowdb/adapters/FileSync";
 type ChatData = {
 	chat_id: string | number;
 	chat_title?: string;
-	isRaidOn?: boolean;
-	latestRaidPostId?: string | null;
+	isRaidOn: boolean;
 };
 
 type Admin = {
@@ -30,6 +29,7 @@ type Post = {
 	admin_id: number;
 	post_link: string;
 	full_text: string;
+	post_points: number;
 	entities: {
 		hashtags: string[];
 		keywords: string[];
@@ -41,7 +41,7 @@ type Point = {
 	points: number;
 };
 
-type CommentData = {
+type Link = {
 	link_id: string;
 	post_id: string;
 	user_id: number;
@@ -54,7 +54,7 @@ type DatabaseSchema = {
 	admins: Admin[];
 	points: Point[];
 	posts: Post[];
-	links: CommentData[];
+	links: Link[];
 };
 
 const usersAdapter = new lowdbFileSync<DatabaseSchema>(configs.databases.users);
@@ -158,41 +158,20 @@ const writeAdmins = async (admin_data: Admin[]): Promise<void> => {
  * @return {Admin | null} - An admin object or null
  */
 const getAdmin = (user_id: number): Admin | null => {
-	return dataDB.get("admins").find({ user_id, chat_id: configs.group_info.chat_id }).value();
+	return dataDB.get("admins").find({ user_id }).value();
 };
 
 /**
- * writePoint()
+ * getAdminForChat()
  * =====================
- * Write points for a user to the database
+ * Get admin information from the database
  *
- * @param { number } userId - The ID of the user for whom points are being written.
- * @param { number } points - The number of points to be added.
+ * @param {Admin} data - admin data
  *
- * @return { Promise<void> } - A Promise that resolves when the operation is complete.
+ * @return {Admin | null} - An admin object or null
  */
-const writePoint = async (userId: number, points: number): Promise<void> => {
-	const userPoints = dataDB.get("points").find({ user_id: userId }).value();
-
-	if (userPoints) {
-		dataDB
-			.get("points")
-			.find({ user_id: userId })
-			.assign({ points: userPoints.points + points })
-			.write();
-	} else {
-		dataDB.get("points").push({ user_id: userId, points }).write();
-	}
-};
-
-/**
- * getPoints()
- * ==================
- * gets top 10 user points
- * @return {Point[]} - top 10 points
- */
-const getTop10Points = (): Point[] => {
-	return dataDB.get("points").sortBy("points").take(10).value();
+const getAdminForChat = (data: Admin): Admin | null => {
+	return dataDB.get("admins").find(data).value();
 };
 
 /**
@@ -219,6 +198,17 @@ const writePost = async (post: Post): Promise<void> => {
 };
 
 /**
+ * getPosts()
+ * =====================
+ * Get all posts from the database
+ *
+ * @return { Post[] } - An array of post objects.
+ */
+const getPosts = (): Post[] => {
+	return dataDB.get("posts").value();
+};
+
+/**
  * getPost()
  * =====================
  * Get a specific post from the database by post_id
@@ -232,36 +222,21 @@ const getPost = (post_id: string): Post | null => {
 };
 
 /**
- * getPosts()
- * =====================
- * Get all posts from the database
- *
- * @return { Post[] } - An array of post objects.
- */
-const getPosts = (): Post[] => {
-	return dataDB.get("posts").value();
-};
-
-/**
  * writeLink()
  * =====================
  * Write a link to the database
  *
- * @param { CommentData } commentData - The link object to be written to the database.
+ * @param { Link } newLink - The link object to be written to the database.
  *
  * @return { Promise<void | -1> } - A Promise that resolves when the operation is complete or -1 if the link already exists.
  */
-const writeComment = async (commentData: CommentData): Promise<void | -1> => {
-	const link = dataDB.get("links").find({ post_id: commentData.post_id, user_id: commentData.user_id }).value();
+const writeLink = async (newLink: Link): Promise<void | -1> => {
+	const link = dataDB.get("links").find({ post_id: newLink.post_id, user_id: newLink.user_id }).value();
 
 	if (link) {
-		dataDB
-			.get("links")
-			.find({ post_id: commentData.post_id, user_id: commentData.user_id })
-			.assign(commentData)
-			.write();
+		dataDB.get("links").find({ post_id: newLink.post_id, user_id: newLink.user_id }).assign(newLink).write();
 	} else {
-		dataDB.get("links").push(commentData).write();
+		dataDB.get("links").push(newLink).write();
 	}
 };
 
@@ -269,12 +244,36 @@ const writeComment = async (commentData: CommentData): Promise<void | -1> => {
  * getLink()
  * ======================
  * Gets a link from database
- * @param { CommentData } commentData - The link object to be found
+ * @param { Link } newLink - The link object to be found
  *
- * @return { Promise<CommentData | null> } -
+ * @return { Promise<Link | null> } -
  */
-const getComment = (commentData: CommentData): CommentData | null => {
-	return dataDB.get("links").find({ post_id: commentData.post_id, user_id: commentData.user_id }).value();
+const getLink = (newLink: Link): Link | null => {
+	return dataDB.get("links").find({ post_id: newLink.post_id, user_id: newLink.user_id }).value();
+};
+
+/**
+ * writePoint()
+ * =====================
+ * Write points for a user to the database
+ *
+ * @param { number } userId - The ID of the user for whom points are being written.
+ * @param { number } points - The number of points to be added.
+ *
+ * @return { Promise<void> } - A Promise that resolves when the operation is complete.
+ */
+const writePoint = async (userId: number, points: number): Promise<void> => {
+	const userPoints = dataDB.get("points").find({ user_id: userId }).value();
+
+	if (userPoints) {
+		dataDB
+			.get("points")
+			.find({ user_id: userId })
+			.assign({ points: userPoints.points + points })
+			.write();
+	} else {
+		dataDB.get("points").push({ user_id: userId, points }).write();
+	}
 };
 
 export {
@@ -287,12 +286,12 @@ export {
 	getUser,
 	writeAdmins,
 	getAdmin,
+	getAdminForChat,
 	writePoint,
-	getTop10Points,
-	Post,
 	writePost,
-	getPosts,
 	getPost,
-	writeComment,
-	getComment,
+	getPosts,
+	Post,
+	writeLink,
+	getLink,
 };
