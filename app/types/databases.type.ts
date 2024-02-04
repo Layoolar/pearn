@@ -16,7 +16,7 @@
  *
  * @Context: ctx.update.message.from
  *
- * @interface [TelegramUserInterface](https://github.com/ptkdev-boilerplate/node-telegram-bot-boilerplate/blob/main/app/webcomponent/types/databases.type.ts)
+ * @interface [TelegramUserInterface](https://github.com/ptkdev-boilerplate/node-telegram-bot-boilerplate/blob/main/app/webcomponent/types/databases.export type.ts)
  *
  * @param { number } id - telegram
  * @param { boolean } is_bot - is user a bot
@@ -30,7 +30,7 @@ export interface TelegramUserInterface {
 	 * Telegram User Interface
 	 * =====================
 	 *
-	 * @interface [TelegramUserInterface](https://github.com/ptkdev-boilerplate/node-telegram-bot-boilerplate/blob/main/app/webcomponent/types/databases.type.ts)
+	 * @interface [TelegramUserInterface](https://github.com/ptkdev-boilerplate/node-telegram-bot-boilerplate/blob/main/app/webcomponent/types/databases.export type.ts)
 	 *
 	 * @param { number } id - telegram
 	 *
@@ -40,7 +40,7 @@ export interface TelegramUserInterface {
 	 * User Interface
 	 * =====================
 	 *
-	 * @interface [TelegramUserInterface](https://github.com/ptkdev-boilerplate/node-telegram-bot-boilerplate/blob/main/app/webcomponent/types/databases.type.ts)
+	 * @interface [TelegramUserInterface](https://github.com/ptkdev-boilerplate/node-telegram-bot-boilerplate/blob/main/app/webcomponent/types/databases.export type.ts)
 	 *
 	 * @param { boolean } is_bot - is user a bot
 	 *
@@ -50,7 +50,7 @@ export interface TelegramUserInterface {
 	 * User Interface
 	 * =====================
 	 *
-	 * @interface [TelegramUserInterface](https://github.com/ptkdev-boilerplate/node-telegram-bot-boilerplate/blob/main/app/webcomponent/types/databases.type.ts)
+	 * @interface [TelegramUserInterface](https://github.com/ptkdev-boilerplate/node-telegram-bot-boilerplate/blob/main/app/webcomponent/types/databases.export type.ts)
 	 *
 	 * @param { string } first_name - user name from telegram
 	 *
@@ -60,7 +60,7 @@ export interface TelegramUserInterface {
 	 * User Interface
 	 * =====================
 	 *
-	 * @interface [TelegramUserInterface](https://github.com/ptkdev-boilerplate/node-telegram-bot-boilerplate/blob/main/app/webcomponent/types/databases.type.ts)
+	 * @interface [TelegramUserInterface](https://github.com/ptkdev-boilerplate/node-telegram-bot-boilerplate/blob/main/app/webcomponent/types/databases.export type.ts)
 	 *
 	 * @param { string } username - user username from telegram
 	 *
@@ -70,7 +70,7 @@ export interface TelegramUserInterface {
 	 * User Interface
 	 * =====================
 	 *
-	 * @interface [TelegramUserInterface](https://github.com/ptkdev-boilerplate/node-telegram-bot-boilerplate/blob/main/app/webcomponent/types/databases.type.ts)
+	 * @interface [TelegramUserInterface](https://github.com/ptkdev-boilerplate/node-telegram-bot-boilerplate/blob/main/app/webcomponent/types/databases.export type.ts)
 	 *
 	 * @param { string } language_code - user code language from OS
 	 *
@@ -81,10 +81,56 @@ export interface TelegramUserInterface {
 	 * User Interface
 	 * =====================
 	 *
-	 * @interface [TelegramUserInterface](https://github.com/ptkdev-boilerplate/node-telegram-bot-boilerplate/blob/main/app/webcomponent/types/databases.type.ts)
+	 * @interface [TelegramUserInterface](https://github.com/ptkdev-boilerplate/node-telegram-bot-boilerplate/blob/main/app/webcomponent/types/databases.export type.ts)
 	 *
 	 * @param { string } twitter_username - user code language from OS
 	 *
 	 */
 	twitter_username?: string;
 }
+
+export type ChatData = {
+	chat_id: string | number;
+	chat_title?: string;
+	isRaidOn?: boolean;
+	latestRaidPostId?: string | null;
+};
+
+export type Admin = {
+	chat_id: string | number;
+	user_id: number;
+	status?: "creator" | "administrator" | "member" | "restricted" | "left" | "kicked";
+};
+
+export type Post = {
+	post_id: string;
+	admin_id: number;
+	post_link: string;
+	full_text: string;
+	entities: {
+		hashtags: string[];
+		keywords: string[];
+		comment_sample: string;
+	};
+};
+
+export type Point = {
+	user_id: number;
+	points: number;
+};
+
+export type CommentDBData = {
+	comment_id: string;
+	post_id: string;
+	user_id: number;
+	url: string;
+};
+
+export type DatabaseSchema = {
+	users: TelegramUserInterface[];
+	chat_data: ChatData[];
+	admins: Admin[];
+	points: Point[];
+	posts: Post[];
+	comments: CommentDBData[];
+};

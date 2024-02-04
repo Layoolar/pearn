@@ -5,33 +5,58 @@ import {
 	dataDB,
 	getAdmin,
 	getChatData,
+	getCommentSize,
 	getPost,
 	getPosts,
-	getTop10Points,
-	getUser,
 	writeChatData,
 } from "@app/functions/databases";
-import { helpMessage } from "@app/functions/messages";
+import { helpMessage, raidEnd, raidMessage } from "@app/functions/messages";
 import {
+	hasSubmittedTwitterMiddleware,
 	isAdminMiddleware,
 	isRaidOnMiddleware,
 	isValidUserMiddleware,
 	updateAdminMiddleware,
 } from "@app/functions/middlewares";
-import { fetchComments } from "@app/functions/twitter_utils";
 import { bot } from "@app/functions/wizards";
+import { AnalyzeComment } from "@app/functions/analyzeComment";
+import { generateComment } from "@app/functions/gpt";
+import { MockFetch } from "@app/functions/twitter_utils";
 
 // Button actions
 bot.action("set_post", isValidUserMiddleware, isAdminMiddleware, async (ctx) => {
 	await ctx.scene.enter("post-wizard");
 });
 
-bot.action("submit_comment", isValidUserMiddleware, isRaidOnMiddleware, async (ctx) => {
+bot.action("submit_wallet", async (ctx) => {
+	await ctx.reply("This feature is not yet available");
+});
+
+bot.action("submit_comment", isValidUserMiddleware, isRaidOnMiddleware, hasSubmittedTwitterMiddleware, async (ctx) => {
 	await ctx.scene.enter("submit-wizard");
 });
 
+bot.action("submit_twitter", isValidUserMiddleware, async (ctx) => {
+	await ctx.scene.enter("username-wizard");
+});
+
+bot.action("generate_comment", isValidUserMiddleware, isRaidOnMiddleware, async (ctx) => {
+	const st =
+		"I almost missed out on this $2500 Optimism chain airdrop! I just found out I was eligible. Check if there are any unknown airdrops you are eligible for on here 👀👇";
+	const kw = ["missed", "airdrops", "eligible"];
+	const ht = ["#Ethereum", "#Optimism", "#Cryptocurrency"];
+	if (ctx.from) {
+		try {
+			const comment = await generateComment(st, kw, ht);
+			ctx.replyWithHTML(`<i>${comment}</i>`);
+		} catch (error) {
+			console.log(error);
+			ctx.replyWithHTML(`<i>An error occured while generating comment, try again</i>`);
+		}
+	}
+});
+
 bot.action("list_raids", isValidUserMiddleware, async (ctx) => {
-	// TODO list all available raid with tag for the current one
 	const chatData = getChatData(config.group_info.chat_id);
 	if (chatData && chatData.latestRaidPostId) {
 		const post = getPost(chatData.latestRaidPostId);
@@ -45,7 +70,7 @@ bot.action("list_raids", isValidUserMiddleware, async (ctx) => {
 	}
 });
 
-bot.action("posts", isValidUserMiddleware, async (ctx) => {
+bot.action("posts", isValidUserMiddleware, isAdminMiddleware, async (ctx) => {
 	const posts = getPosts();
 	if (!posts.length) {
 		ctx.reply("There are no posts");
@@ -64,12 +89,11 @@ bot.action("posts", isValidUserMiddleware, async (ctx) => {
 bot.action("points", isValidUserMiddleware, (ctx) => {
 	const user = ctx.from;
 	if (user) {
+		const user_name = user.username || user.first_name || user.last_name || "";
 		const userPoints = dataDB.get("points").find({ user_id: user.id }).value();
 		ctx.telegram.sendMessage(
 			user.id,
-			`<b>${user.username}, you currently have ${userPoints.points} point${
-				userPoints.points === 1 ? "" : "s"
-			}</b>`,
+			`<b>${user_name}, you currently have ${userPoints.points} point${userPoints.points === 1 ? "" : "s"}</b>`,
 			{ parse_mode: "HTML" },
 		);
 	}
@@ -154,38 +178,37 @@ bot.action("start_raid", isAdminMiddleware, async (ctx) => {
 			);
 			return;
 		}
+		if (!chat_data.latestRaidPostId) {
+			ctx.reply(`There are no post yet. Use Set post button to add`);
+			return;
+		}
 
-		const start = Date.now();
-		const duration = 20 * 1000; // 10 seconds for testing purposes
+		const duration = 80 * 1000;
 		const raidTimeout = setTimeout(() => {
-			ctx.reply(`Raid Ended, took ${(Date.now() - start) / 1000} seconds`);
-			writeChatData({ chat_id: config.group_info.chat_id, isRaidOn: false });
-			const commentLinks = [
-				"https://twitter.com/example_tweet/status/1234567890/comment/9876543210",
-				"https://twitter.com/example_tweet/status/1234567890/comment/9876543211",
-				"",
-				"https://twitter.com/example_tweet/status/1234567890/comment/9876543212",
-				"https://twitter.com/example_tweet/status/1234567890/comment/9876543213",
-				"",
-				"",
-				"https://twitter.com/example_tweet/status/1234567890/comment/9876543214",
-				"",
-				"https://twitter.com/example_tweet/status/1234567890/comment/9876543215",
-				"",
-				"https://twitter.com/example_tweet/status/1234567890/comment/9876543216",
-			];
-			fetchComments(commentLinks)
-				.then(() => {
-					ctx.telegram.sendMessage(config.group_info.creator_id, "All your links have been checked");
-				})
-				.catch();
-			// TODO Give summary or last raid in case of invalid links
+			if (post) {
+				ctx.telegram.sendMessage(config.group_info.chat_id, raidEnd(getCommentSize(post.post_id)), {
+					parse_mode: "HTML",
+				});
+				writeChatData({ chat_id: config.group_info.chat_id, isRaidOn: false });
+				if (chat_data.latestRaidPostId) {
+					// const startCheck = new AnalyzeComment(chat_data.latestRaidPostId);
+					// startCheck.start();
+					new MockFetch().start(ctx);
+				}
+			}
 		}, duration);
 
 		// Starting the timeout
 		raidTimeout;
+		const post = getPost(chat_data.latestRaidPostId);
+		if (!post) {
+			ctx.reply(`No post set`);
+			return;
+		}
 		writeChatData({ ...chat_data, isRaidOn: true });
-		ctx.reply("Raid Started");
+		ctx.telegram.sendMessage(config.group_info.chat_id, raidMessage(post.post_link), {
+			parse_mode: "HTML",
+		});
 	}
 });
 

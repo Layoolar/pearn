@@ -16,6 +16,7 @@ import * as command from "@app/functions/commands";
 	await command.start();
 	await command.adminMenu();
 	await command.menu();
+	await command.info();
 	await command.quit();
 
 	await command.launch();

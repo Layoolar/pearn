@@ -1,14 +1,19 @@
 import { Composer, Markup, Scenes } from "telegraf";
 import { WizardContext } from "@app/functions/telegraf";
 import { Post, writeChatData, writePost } from "@app/functions/databases";
-import { collectWords, extractId } from "@app/functions/utils";
+import { collectWords, extractId, startsWithTag } from "@app/functions/utils";
 import config from "@configs/config";
-import { startRaidButtonMarkup } from "@app/functions/button";
+import { setPostButtonMarkup, startRaidButtonMarkup } from "@app/functions/button";
 
-const PostData = {
-	link: "",
-	hashtags: [],
-	keywords: [],
+const initialData = {
+	post: {
+		link: "",
+		hashtags: [],
+		keywords: [],
+		sample_comment: "",
+	},
+	comment: {},
+	twitter: {},
 };
 
 const stepHandler = new Composer<WizardContext>();
@@ -24,19 +29,23 @@ stepHandler.action("confirm", async (ctx) => {
 				entities: {
 					hashtags: ctx.scene.session.store.post.hashtags,
 					keywords: ctx.scene.session.store.post.keywords,
+					comment_sample: ctx.scene.session.store.post.sample_comment,
 				},
 			};
 			writePost(post);
 			writeChatData({ chat_id: config.group_info.chat_id, latestRaidPostId: post_id });
-			ctx.replyWithHTML("New post set, use the button below to start the raid", startRaidButtonMarkup);
+			ctx.replyWithHTML(
+				`New post set, use the button below to start the raid\n${ctx.scene.session.store.post.link}`,
+				startRaidButtonMarkup,
+			);
 		} else {
-			await ctx.reply("Post link is invalid");
-			// TODO return set post button here
+			await ctx.replyWithHTML(
+				"<i>Post link is invalid, try again using the button below</i>",
+				setPostButtonMarkup,
+			);
 		}
 	} else {
-		await ctx.reply("Link was not saved");
-		// TODO return set post button here
-		// TODO create a button markup to make it dynamic
+		await ctx.replyWithHTML("<i>Link was not saved</i>", setPostButtonMarkup);
 	}
 	return await ctx.scene.leave();
 });
@@ -51,15 +60,15 @@ export const postWizard = new Scenes.WizardScene<WizardContext>(
 		if (!ctx.from) {
 			return await ctx.scene.leave();
 		}
-		await ctx.reply("Step 1\nPlease submit the post link");
-		ctx.scene.session.store = { post: PostData, comment: {} };
+		await ctx.replyWithHTML("<b>Step 1</b>\nPlease submit the post link");
+		ctx.scene.session.store = initialData;
 		return ctx.wizard.next();
 	},
 	async (ctx) => {
 		if (!ctx.from) {
 			return await ctx.scene.leave();
 		}
-		await ctx.reply("Step 2\nPlease submit the hashtags. Make sure they start with a '#' and are comma separated");
+		await ctx.replyWithHTML("<b>Step 2</b>\nPlease submit the hashtags. Make sure they start with a '#' and are comma separated");
 		if (ctx.message && "text" in ctx.message) {
 			ctx.scene.session.store.post.link = ctx.message?.text || "";
 		}
@@ -69,19 +78,36 @@ export const postWizard = new Scenes.WizardScene<WizardContext>(
 		if (!ctx.from) {
 			return await ctx.scene.leave();
 		}
-		await ctx.reply("Step 3\nPlease submit the keywords. Make sure they are comma separated");
 		if (ctx.message && "text" in ctx.message) {
-			ctx.scene.session.store.post.hashtags = collectWords(ctx.message.text);
+			const tags = collectWords(ctx.message.text);
+			if (startsWithTag(tags)) {
+				ctx.scene.session.store.post.hashtags = collectWords(ctx.message.text);
+				await ctx.replyWithHTML("<b>Step 3</b>\nPlease submit the keywords. Make sure they are comma separated");
+				return ctx.wizard.next();
+			} else {
+				await ctx.replyWithHTML(
+					"<b>Step 2</b>\nPlease submit the hashtags. Make sure they start with a '#' and are comma separated",
+				);
+			}
+		}
+	},
+	async (ctx) => {
+		if (!ctx.from) {
+			return await ctx.scene.leave();
+		}
+		await ctx.replyWithHTML("<b>Step 4</b>\nPlease submit the comment sample");
+		if (ctx.message && "text" in ctx.message) {
+			ctx.scene.session.store.post.keywords = collectWords(ctx.message.text);
 		}
 		return ctx.wizard.next();
 	},
 	async (ctx) => {
 		if (ctx.from) {
 			if (ctx.message && "text" in ctx.message) {
-				ctx.scene.session.store.post.keywords = collectWords(ctx.message.text);
+				ctx.scene.session.store.post.sample_comment = ctx.message.text;
 			}
-			ctx.replyWithMarkdown(
-				`Almost done`,
+			ctx.replyWithHTML(
+				`<b>Confirm your Post</b>\n\n<i><b>Post link</b>: ${ctx.scene.session.store.post.link}\n<b>Hashtags</b>: ${ctx.scene.session.store.post.hashtags}\n<b>Keywords</b>: ${ctx.scene.session.store.post.keywords}\n<b>Sample comment</b>: ${ctx.scene.session.store.post.sample_comment}</i>`,
 				Markup.inlineKeyboard([
 					Markup.button.callback("Confirm", "confirm"),
 					Markup.button.callback("Cancel", "cancel"),

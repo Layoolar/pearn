@@ -3,6 +3,7 @@ import config from "@configs/config";
 import bot from "@app/functions/telegraf";
 import { Context, MiddlewareFn } from "telegraf";
 import { updateAdminFn } from "@app/functions/shared";
+import { submitTwitterButtonMarkup } from "./button";
 
 // Middlewares
 
@@ -57,9 +58,12 @@ const isValidUserMiddleware: MiddlewareFn<Context> = (ctx, next) => {
 	if (ctx.from && getUser(ctx.from.id)) {
 		next();
 	} else {
-		ctx.reply("<b>You need to use /start in a private message to Eddy before you can use commands</b>", {
-			parse_mode: "HTML",
-		});
+		ctx.reply(
+			"<b>You need to use /start in a private message to <a href='tg://resolve?domain=edd_the_tweet_bot&start=/start'>Eddy</a> before you can use commands</b>",
+			{
+				parse_mode: "HTML",
+			},
+		);
 	}
 };
 
@@ -82,7 +86,7 @@ const isCreatorMiddleware: MiddlewareFn<Context> = (ctx, next) => {
 const isAdminMiddleware: MiddlewareFn<Context> = (ctx, next) => {
 	if (ctx.from) {
 		const admin = getAdmin(ctx.from.id);
-		if (admin) {
+		if (admin || ctx.from.id === config.group_info.creator_id) {
 			next();
 		} else {
 			ctx.reply("You need administrative permissions to use this command");
@@ -91,7 +95,7 @@ const isAdminMiddleware: MiddlewareFn<Context> = (ctx, next) => {
 };
 
 // Error to check if user has provided their twitter info
-const useSubmittedTwitterMiddleware: MiddlewareFn<Context> = (ctx, next) => {
+const hasSubmittedTwitterMiddleware: MiddlewareFn<Context> = (ctx, next) => {
 	if (!ctx.from) {
 		return;
 	}
@@ -102,7 +106,8 @@ const useSubmittedTwitterMiddleware: MiddlewareFn<Context> = (ctx, next) => {
 		next();
 	} else {
 		ctx.replyWithHTML(
-			`<b>You have not provided your twitter username. To do this, use <i>/add_twitter [Your twitter username]</i></b>`,
+			`<b>You have not provided your twitter username. Use the button below to submit you twitter username. Make sure it starts with an <i>'@'</i></b>`,
+			submitTwitterButtonMarkup,
 		);
 	}
 };
@@ -126,6 +131,6 @@ export {
 	updateAdminMiddleware,
 	isAdminMiddleware,
 	isCreatorMiddleware,
-	useSubmittedTwitterMiddleware,
+	hasSubmittedTwitterMiddleware,
 	isRaidOnMiddleware,
 };

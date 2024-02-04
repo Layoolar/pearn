@@ -1,13 +1,18 @@
 import { Composer, Markup, Scenes } from "telegraf";
 import { WizardContext } from "@app/functions/telegraf";
 import { extractId, extractUsername } from "@app/functions/utils";
-import { getChatData, writeComment } from "@app/functions/databases";
+import { getChatData, getUser, writeComment } from "@app/functions/databases";
 import config from "@configs/config";
 
-const PostData = {
-	link: "",
-	hashtags: [],
-	keywords: [],
+const initialData = {
+	post: {
+		link: "",
+		hashtags: [],
+		keywords: [],
+		sample_comment: "",
+	},
+	comment: {},
+	twitter: {},
 };
 
 const stepHandler = new Composer<WizardContext>();
@@ -16,33 +21,39 @@ stepHandler.action("confirm", async (ctx) => {
 		const commentLink = ctx.scene.session.store.comment[ctx.from.id];
 		const commentId = extractId(commentLink);
 		const username = extractUsername(commentLink);
-		// TODO Crosscheck username with stored twitter username
-		if (commentId) {
+		if (commentId && `@${username}` === getUser(ctx.from.id)?.twitter_username) {
 			const chatData = getChatData(config.group_info.chat_id);
 			if (chatData?.latestRaidPostId) {
 				if (!chatData.isRaidOn) {
 					await ctx.replyWithHTML("<b>Too slow, the raid has ended, look out for the next one</b>");
 				} else {
-					await ctx.replyWithHTML(`<b>Your comment link has been submitted: ${commentLink}</b>`);
-					// TODO fetch post id
 					const commentData = {
-						link_id: commentId,
+						comment_id: commentId,
 						post_id: chatData.latestRaidPostId,
 						user_id: ctx.from.id,
 						url: commentLink,
 					};
-					writeComment(commentData);
+					const saved = await writeComment(commentData);
+					if (saved === -1) {
+						await ctx.replyWithHTML(`<b>You are only allowed to submit one link per post</b>`);
+					} else {
+						await ctx.replyWithHTML(`<b>Your comment link has been submitted: ${commentLink}</b>`);
+					}
 				}
 			} else {
 				await ctx.replyWithHTML("<b>An error occured, please inform an Admin about this error</b>");
+				return await ctx.scene.leave();
 			}
 		} else {
-			await ctx.replyWithHTML("<b>Invalid comment link. Check the link and try again.</b>");
+			await ctx.replyWithHTML("<b>Invalid comment link. Please enter a valid twitter comment link.</b>");
 		}
 	} else {
 		await ctx.replyWithHTML("<b>Link was not saved</b>");
+		return await ctx.scene.leave();
 	}
-	return await ctx.scene.leave();
+});
+stepHandler.action("enter_again", async (ctx) => {
+	return ctx.scene.reenter();
 });
 stepHandler.action("cancel", async (ctx) => {
 	await ctx.reply("You've cancelled the operation");
@@ -56,7 +67,7 @@ export const submitWizard = new Scenes.WizardScene<WizardContext>(
 			return await ctx.scene.leave();
 		}
 		await ctx.replyWithHTML("<b>Please submit your comment link</b>");
-		ctx.scene.session.store = { post: PostData, comment: {} };
+		ctx.scene.session.store = initialData;
 		return ctx.wizard.next();
 	},
 	async (ctx) => {
@@ -71,6 +82,7 @@ export const submitWizard = new Scenes.WizardScene<WizardContext>(
 				`<i>Please confirm the Twitter link: ${ctx.scene.session.store.comment[ctx.from.id]}</i>`,
 				Markup.inlineKeyboard([
 					Markup.button.callback("Confirm", "confirm"),
+					Markup.button.callback("No, enter again", "enter_again"),
 					Markup.button.callback("Cancel", "cancel"),
 				]),
 			);

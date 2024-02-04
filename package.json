@@ -60,8 +60,9 @@
 		"localtunnel": "^2.0.2",
 		"lowdb": "^1.0.0",
 		"node-schedule": "^2.1.1",
+		"openai": "^4.26.0",
 		"telegraf": "^4.4.2",
-		"twit": "^2.2.11"
+		"twitter-api-v2": "^1.16.0"
 	},
 	"devDependencies": {
 		"@ptkdev/all-shields-cli": "^2.0.2",

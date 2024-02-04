@@ -9,7 +9,7 @@ module.exports = {
 		token: "BOT_TOKEN",
 	},
 
-	"group_info": { // from @eddy_tweet_bot /info on telegram
+	"group_info": { // from @edd_tweet_bot /info on telegram
 		chat_id: TELEGRAM_GROUP_ID,
 		chat_title: TELEGRAM_GROUP_TITLE,
 		creator_id: TELEGRAM_GROUP_CREATOR_ID,
@@ -20,6 +20,10 @@ module.exports = {
 		consumer_secret: "TWITTER_CONSUMER_SECRET",
 		access_token: "TWITTER_ACCESS_TOKEN",
 		access_token_secret: "TWITTER_ACCESS_TOKEN_SECRET"
+	},
+
+	openAI: {
+		apiKey: "OPENAI_KEY",
 	},
 
 	mode: "poll", // or webhook

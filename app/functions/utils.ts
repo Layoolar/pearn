@@ -43,4 +43,27 @@ const collectWords = (input: string): string[] => {
 	const wordsArray = input.split(",").map((word) => word.trim());
 	return wordsArray;
 };
-export { extractId, extractUsername, collectWords };
+
+/**
+ * startsWithTag()
+ * =================================
+ *
+ * @param {string[]} input - array of tags
+ * @return {boolean} - True if all contains tags else false
+ */
+const startsWithTag = (input: string[]): boolean => {
+	return input.every((item) => item.startsWith("#"));
+};
+
+/**
+ * isValidTwitterUsername()
+ * =================================
+ *
+ * @param {string} text - collects twitter username
+ * @return {boolean} - if test is true or not
+ */
+const isValidTwitterUsername = (text: string): boolean => {
+	return text.startsWith("@") && /^[a-zA-Z0-9_]+$/.test(text.substring(1));
+};
+
+export { extractId, extractUsername, collectWords, isValidTwitterUsername, startsWithTag };

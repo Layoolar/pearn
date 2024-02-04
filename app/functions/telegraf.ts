@@ -16,8 +16,12 @@ interface MyWizardSession extends Scenes.WizardSessionData {
 			link: string;
 			hashtags: string[];
 			keywords: string[];
+			sample_comment: string;
 		};
 		comment: {
+			[k: number]: string;
+		};
+		twitter: {
 			[k: number]: string;
 		};
 	};

@@ -7,55 +7,18 @@
  * @license: MIT License
  *
  */
-import type { TelegramUserInterface } from "@app/types/databases.type";
+import type {
+	Admin,
+	ChatData,
+	CommentDBData,
+	DatabaseSchema,
+	Point,
+	Post,
+	TelegramUserInterface,
+} from "@app/types/databases.type";
 import configs from "@configs/config";
 import lowdb from "lowdb";
 import lowdbFileSync from "lowdb/adapters/FileSync";
-
-type ChatData = {
-	chat_id: string | number;
-	chat_title?: string;
-	isRaidOn?: boolean;
-	latestRaidPostId?: string | null;
-};
-
-type Admin = {
-	chat_id: string | number;
-	user_id: number;
-	status?: "creator" | "administrator" | "member" | "restricted" | "left" | "kicked";
-};
-
-type Post = {
-	post_id: string;
-	admin_id: number;
-	post_link: string;
-	full_text: string;
-	entities: {
-		hashtags: string[];
-		keywords: string[];
-	};
-};
-
-type Point = {
-	user_id: number;
-	points: number;
-};
-
-type CommentData = {
-	link_id: string;
-	post_id: string;
-	user_id: number;
-	url: string;
-};
-
-type DatabaseSchema = {
-	users: TelegramUserInterface[];
-	chat_data: ChatData[];
-	admins: Admin[];
-	points: Point[];
-	posts: Post[];
-	links: CommentData[];
-};
 
 const usersAdapter = new lowdbFileSync<DatabaseSchema>(configs.databases.users);
 const dataAdapter = new lowdbFileSync<DatabaseSchema>(configs.databases.data);
@@ -64,7 +27,7 @@ const usersDB = lowdb(usersAdapter);
 const dataDB = lowdb(dataAdapter);
 
 usersDB.defaults({ users: [] }).write();
-dataDB.defaults({ chat_data: [], admins: [], points: [], posts: [], links: [] }).write();
+dataDB.defaults({ chat_data: [], admins: [], points: [], posts: [], comments: [] }).write();
 
 /**
  * writeUser()
@@ -137,15 +100,7 @@ const getChatData = (chat_id: string | number): ChatData | null => {
  * @return {Promise<void>} - A Promise that resolves when the operation is complete.
  */
 const writeAdmins = async (admin_data: Admin[]): Promise<void> => {
-	// TODO - Put logic in-place for a removed admin
-	admin_data.forEach((admin) => {
-		const exists = dataDB.get("admins").find({ user_id: admin.user_id, chat_id: admin.chat_id }).value();
-		if (exists) {
-			dataDB.get("admins").find({ user_id: admin.user_id, chat_id: admin.chat_id }).assign(admin).write();
-		} else {
-			dataDB.get("admins").push(admin).write();
-		}
-	});
+	dataDB.set("admins", admin_data).write();
 };
 
 /**
@@ -251,30 +206,58 @@ const getPosts = (): Post[] => {
  *
  * @return { Promise<void | -1> } - A Promise that resolves when the operation is complete or -1 if the link already exists.
  */
-const writeComment = async (commentData: CommentData): Promise<void | -1> => {
-	const link = dataDB.get("links").find({ post_id: commentData.post_id, user_id: commentData.user_id }).value();
+const writeComment = async (commentData: CommentDBData): Promise<void | -1> => {
+	const link = dataDB.get("comments").find({ post_id: commentData.post_id, user_id: commentData.user_id }).value();
 
-	if (link) {
-		dataDB
-			.get("links")
-			.find({ post_id: commentData.post_id, user_id: commentData.user_id })
-			.assign(commentData)
-			.write();
-	} else {
-		dataDB.get("links").push(commentData).write();
+	if (!link) {
+		dataDB.get("comments").push(commentData).write();
+		return;
 	}
+	return -1;
 };
 
 /**
- * getLink()
+ * getComment()
  * ======================
  * Gets a link from database
  * @param { CommentData } commentData - The link object to be found
  *
  * @return { Promise<CommentData | null> } -
  */
-const getComment = (commentData: CommentData): CommentData | null => {
-	return dataDB.get("links").find({ post_id: commentData.post_id, user_id: commentData.user_id }).value();
+const getComment = (commentData: CommentDBData): CommentDBData | null => {
+	return dataDB.get("comments").find({ post_id: commentData.post_id, user_id: commentData.user_id }).value();
+};
+
+/**
+ * getComments()
+ * ======================
+ * Gets a link from database
+ * @param { string } post_id - The replied post
+ * @return { Promise<CommentData[]> } - Array of comments
+ */
+const getComments = (post_id: string): CommentDBData[] => {
+	return dataDB.get("comments").filter({ post_id }).value();
+};
+
+/**
+ * getCommentSize()
+ * =============================
+ * Gets the size of people who joined raid
+ * @param {string} post_id - The current raid post
+ * @return {number} - The number of raid comments submitted
+ */
+const getCommentSize = (post_id: string): number => {
+	return dataDB.get("comments").filter({ post_id }).size().value();
+};
+
+/**
+ * deleteComments()
+ * ======================
+ * Removes commenst from DB
+ * @param { string } post_id - The replied post
+ */
+const deleteComments = (post_id: string): void => {
+	dataDB.get("comments").remove({ post_id }).write();
 };
 
 export {
@@ -295,4 +278,7 @@ export {
 	getPost,
 	writeComment,
 	getComment,
+	getComments,
+	getCommentSize,
+	deleteComments,
 };
