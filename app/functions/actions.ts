@@ -8,6 +8,8 @@ import {
 	getCommentSize,
 	getPost,
 	getPosts,
+	getTop10Points,
+	getUser,
 	writeChatData,
 } from "@app/functions/databases";
 import { helpMessage, raidEnd, raidMessage } from "@app/functions/messages";
@@ -57,7 +59,6 @@ bot.action("generate_comment", isValidUserMiddleware, isRaidOnMiddleware, async 
 			const comment = await generateComment(st, kw, ht);
 			ctx.replyWithHTML(`<i>${comment}</i>`);
 		} catch (error) {
-			console.log(error);
 			ctx.replyWithHTML(`<i>An error occured while generating comment, try again</i>`);
 		}
 	}
@@ -117,41 +118,15 @@ bot.action("help", isValidUserMiddleware, (ctx) => {
 
 bot.action("leaderboard", isValidUserMiddleware, (ctx) => {
 	if (ctx.chat) {
-		// const points = getTop10Points();
-		// const topUsers = points.map((point) => {
-		// 	const user = getUser(point.user_id);
-		// 	return {
-		// 		username: user?.username || user?.first_name || user?.twitter_username || "Anonymous user",
-		// 		points: point.points,
-		// 	};
-		// });
-		interface User {
-			username: string;
-			points: number;
-		}
+		const points = getTop10Points();
+		const topUsers = points.map((point) => {
+			const user = getUser(point.user_id);
+			return {
+				username: user?.username || user?.first_name || user?.twitter_username || "Anonymous user",
+				points: point.points,
+			};
+		});
 
-		const topUsers: User[] = [
-			{ username: "Alice", points: 250 },
-			{ username: "Bob", points: 220 },
-			{ username: "Charlie", points: 200 },
-			{ username: "David", points: 180 },
-			{ username: "Eva", points: 170 },
-			{ username: "Frank", points: 160 },
-			{ username: "Grace", points: 150 },
-			{ username: "Henry", points: 140 },
-			{ username: "Ivy", points: 130 },
-			{ username: "Jack", points: 120 },
-			{ username: "Kelly", points: 110 },
-			{ username: "Liam", points: 100 },
-			{ username: "Mia", points: 90 },
-			{ username: "Nora", points: 80 },
-			{ username: "Olivia", points: 70 },
-			{ username: "Peter", points: 60 },
-			{ username: "Quinn", points: 50 },
-			{ username: "Rose", points: 40 },
-			{ username: "Sam", points: 30 },
-			{ username: "Tom", points: 20 },
-		];
 		let leaderBoardText = "<b>Top 10 Users with the Highest Points:</b>\n\n";
 		topUsers.forEach((user, index) => {
 			leaderBoardText += `<b>${index + 1}.</b> <i>${user.username}</i> - <b>${user.points}</b> points\n`;

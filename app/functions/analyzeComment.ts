@@ -2,6 +2,7 @@ import { CommentDBData, Post } from "@app/types/databases.type";
 import { ReferencedTweetV2, TwitterApi } from "twitter-api-v2";
 import { getPost, deleteComments, getComments, writePoint } from "@app/functions/databases";
 import config from "@configs/config";
+import fs from "fs";
 
 type CommentData = {
 	user_id: number;
@@ -70,10 +71,8 @@ class AnalyzeComment {
 				try {
 					const result = await this.fetchBatchComments(link);
 					collection.push(...result);
-					// console.log("\u001b[38:5:82m", `Fetching comment from link: ${link}`, "\u001b[0m");
 				} catch (error) {
-					// console.error("\u001b[38:5:160m", `Error fetching comment for link: ${link}`, "\u001b[0m");
-					continue; // Continue to the next link in case of error
+					continue;
 				}
 
 				lastRequestTimestamp = Date.now();
@@ -85,6 +84,10 @@ class AnalyzeComment {
 						writePoint((data as CommentData).user_id, (data as CommentData).points);
 					}
 				}
+			}
+		} catch (error) {
+			if (error instanceof Error) {
+				fs.appendFileSync("fetch_error.log", `${new Date().toISOString()}: ${error}\n`);
 			}
 		} finally {
 			this.destroy();
@@ -121,9 +124,8 @@ class AnalyzeComment {
 			}
 		} catch (e) {
 			const errors = TwitterApi.getErrors(e);
-			console.log("\u001b[48:5:129m", "Twitter API spit out errors!!!!", e, "\u001b[0m");
 			for (const err of errors) {
-				console.log(err);
+				fs.appendFileSync("fetch_error.log", `${new Date().toISOString()}: ${err}\n`);
 				const respObj: ResponseObject<unknown> = {
 					error: true,
 					data: err,
@@ -131,7 +133,6 @@ class AnalyzeComment {
 				res.push(respObj);
 			}
 		}
-		console.log("line 134", res);
 		return res;
 	}
 
@@ -150,7 +151,6 @@ class AnalyzeComment {
 		const {
 			entities: { hashtags, keywords },
 		} = post;
-		console.log(post);
 		const data = {
 			total_hashtags: hashtags.length,
 			total_keywords: keywords.length,
@@ -179,7 +179,6 @@ class AnalyzeComment {
 		data.points += countKeywords.length;
 		data.keywords_found = countKeywords.length;
 		data.points *= 10;
-		console.log("line 182", data);
 		return data;
 	}
 
@@ -223,14 +222,11 @@ class AnalyzeComment {
 	 * @return {Promise<void>}
 	 */
 	static wait(ms: number): Promise<void> {
-		console.log("\u001b[48:5:129m", "Request throttling...", "\u001b[0m");
 		return new Promise<void>((resolve) => setTimeout(resolve, ms));
 	}
 
 	private destroy() {
-		// cleanup
 		deleteComments(this.postId);
-		console.log("\u001b[48:5:129m", "Destroying class instance...", "\u001b[0m");
 	}
 }
 

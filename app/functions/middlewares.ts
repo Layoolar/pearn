@@ -4,41 +4,18 @@ import bot from "@app/functions/telegraf";
 import { Context, MiddlewareFn } from "telegraf";
 import { updateAdminFn } from "@app/functions/shared";
 import { submitTwitterButtonMarkup } from "./button";
+import fs from "fs";
 
 // Middlewares
-
-// Logging middleware
-const loggingMiddleware: MiddlewareFn<Context> = (ctx, next) => {
-	const start = Date.now();
-	const timestamp = () => new Date().toLocaleTimeString();
-	const userId = ctx.from?.id;
-	const chatId = ctx.chat?.id;
-	const username = ctx.from?.username || ctx.from?.first_name;
-	const ut = ctx.updateType;
-	const { log } = console;
-
-	if ("message" in ctx.update && "text" in ctx.update.message) {
-		const command = ctx.update.message?.text;
-
-		log(
-			"\u001b[38:5:45m",
-			`[${timestamp()}] UT-[${ut}] Request from ${username || "UnknownUser"} (ID: ${userId}) in chat ${chatId}: ${
-				command || "No command"
-			}`,
-			"\u001b[0m",
-		);
-	} else {
-		log("\u001b[48:5:202m", `Received an update UT-[${ut}]`, "\u001b[0m");
-		log(
-			"\u001b[38:5:45m",
-			`[${timestamp()}] UT-[${ut}] Request from ${username || "UnknownUser"} (ID: ${userId}) in chat ${chatId}`,
-			"\u001b[0m",
-		);
+const errorLoggerMiddleware = async (ctx: Context, next: () => Promise<unknown>) => {
+	try {
+		await next();
+	} catch (error) {
+		if (error instanceof Error) {
+			fs.appendFileSync("error.log", `${new Date().toISOString()}: ${error.stack}\n`);
+			ctx.reply("An error occurred. Please try again later.");
+		}
 	}
-	next().then(() => {
-		const ms = Date.now() - start;
-		log("\u001b[48:5:57m", `Request processed in ${ms}ms`, "\u001b[0m");
-	});
 };
 
 // Middleware to check if the message is from the authorized group
@@ -47,9 +24,6 @@ const isFromAuthorizedGroupMiddleware: MiddlewareFn<Context> = (ctx, next) => {
 		next();
 	} else {
 		ctx.reply("This command can only be used in the authorized group");
-		// if (ctx.chat && ctx.chat.type !== "private") {
-		// 	await ctx.telegram.leaveChat(ctx.chat.id);
-		// }
 	}
 };
 
@@ -122,7 +96,7 @@ const isRaidOnMiddleware: MiddlewareFn<Context> = (ctx, next) => {
 	}
 };
 
-bot.use(loggingMiddleware);
+bot.use(errorLoggerMiddleware);
 
 export {
 	bot,
