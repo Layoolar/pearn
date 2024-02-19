@@ -21,7 +21,6 @@ stepHandler.action("confirm", async (ctx) => {
 		const commentLink = ctx.scene.session.store.comment[ctx.from.id];
 		const commentId = extractId(commentLink);
 		const username = extractUsername(commentLink);
-		console.log(commentId, username);
 		if (commentId && `@${username}` === getUser(ctx.from.id)?.twitter_username) {
 			const chatData = getChatData(config.group_info.chat_id);
 			if (chatData?.latestRaidPostId) {

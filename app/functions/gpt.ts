@@ -26,7 +26,6 @@ const generateComment = async (
 			throw new Error("Unable to generate comment");
 		}
 	} catch (error) {
-		console.log((error as Error).message);
 		throw new Error("Unable to generate comment");
 	}
 };
