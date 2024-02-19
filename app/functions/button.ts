@@ -2,7 +2,7 @@ import { Markup } from "telegraf";
 
 // Admin buttons
 export const setPostButton = Markup.button.callback("Set post", "set_post");
-export const startRaidButton = Markup.button.callback("Start raid", "start_raid");
+export const startRaidButton = Markup.button.callback("Start campaign", "start_raid");
 export const updateAdminButton = Markup.button.callback("Update admin", "update_admin");
 export const postsButton = Markup.button.callback("Posts", "posts");
 export const adminButtonsMarkup = Markup.inlineKeyboard([[setPostButton, postsButton], [updateAdminButton]]);
@@ -15,7 +15,7 @@ export const submitCommentButton = Markup.button.callback("Submit comment", "sub
 export const generateCommentButton = Markup.button.callback("Generate comment", "generate_comment");
 export const leaderboardButton = Markup.button.callback("Leaderboard", "leaderboard");
 export const submitWalletButton = Markup.button.callback("Submit wallet", "submit_wallet");
-export const listRaidButton = Markup.button.callback("List raids", "list_raids");
+export const listRaidButton = Markup.button.callback("List campaigns", "list_raids");
 export const submitTwitter = Markup.button.callback("Change twitter username", "submit_twitter");
 export const userButtonsMarkup = Markup.inlineKeyboard([
 	[listRaidButton, helpButton],

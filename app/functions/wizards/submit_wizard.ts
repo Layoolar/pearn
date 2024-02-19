@@ -21,11 +21,12 @@ stepHandler.action("confirm", async (ctx) => {
 		const commentLink = ctx.scene.session.store.comment[ctx.from.id];
 		const commentId = extractId(commentLink);
 		const username = extractUsername(commentLink);
+		console.log(commentId, username);
 		if (commentId && `@${username}` === getUser(ctx.from.id)?.twitter_username) {
 			const chatData = getChatData(config.group_info.chat_id);
 			if (chatData?.latestRaidPostId) {
 				if (!chatData.isRaidOn) {
-					await ctx.replyWithHTML("<b>Too slow, the raid has ended, look out for the next one</b>");
+					await ctx.replyWithHTML("<b>Too slow, the campaign has ended, look out for the next one</b>");
 				} else {
 					const commentData = {
 						comment_id: commentId,

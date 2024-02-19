@@ -40,7 +40,7 @@ const extractUsername = (link: string): string | null => {
  * @return {string[]} - array of words
  */
 const collectWords = (input: string): string[] => {
-	const wordsArray = input.split(",").map((word) => word.trim());
+	const wordsArray = input.split(/,|\s+/).map((word) => word.trim());
 	return wordsArray;
 };
 

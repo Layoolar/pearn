@@ -1,6 +1,6 @@
-import { CommentDBData } from "@app/types/databases.type";
+import { CommentDBData, Post } from "@app/types/databases.type";
 import { ReferencedTweetV2, TwitterApi } from "twitter-api-v2";
-import { deleteComments, getComments, writePoint } from "@app/functions/databases";
+import { getPost, deleteComments, getComments, writePoint } from "@app/functions/databases";
 import config from "@configs/config";
 
 type CommentData = {
@@ -50,7 +50,7 @@ class AnalyzeComment {
 	async start(): Promise<void> {
 		try {
 			const collection: ResponseObject<unknown>[] = [];
-			const desiredTimeInterval = 4000;
+			const desiredTimeInterval = 60000;
 			let lastRequestTimestamp = Date.now();
 			const comment_dbdata = getComments(this.postId);
 			if (!comment_dbdata.length) {
@@ -103,7 +103,7 @@ class AnalyzeComment {
 			for (const { id, text, entities, referenced_tweets } of response.data) {
 				const current = array.find((item) => item.comment_id === id);
 				if (current && referenced_tweets && this.isDirectReply(referenced_tweets, this.postId)) {
-					const ht = entities?.hashtags.map((hashtag) => hashtag.tag);
+					const ht = entities?.hashtags?.map((hashtag) => hashtag.tag);
 					const points_data = this.awardPointsForComment(text, ht);
 					const respObj: ResponseObject<CommentData> = {
 						error: false,
@@ -113,7 +113,7 @@ class AnalyzeComment {
 							post_id: this.postId || "",
 							text: text,
 							hashtags: ht || null,
-							points: points_data.points,
+							points: points_data?.points || 0,
 						},
 					};
 					res.push(respObj);
@@ -131,6 +131,7 @@ class AnalyzeComment {
 				res.push(respObj);
 			}
 		}
+		console.log("line 134", res);
 		return res;
 	}
 
@@ -141,22 +142,25 @@ class AnalyzeComment {
 	 *
 	 * @return {PointsData} points summary object
 	 */
-	private awardPointsForComment(comment_text = "", comment_hashtags: string[] = []): PointsData {
-		// 	const {
-		// 	entities: { hashtags, keywords },
-		// } = getPost(config.group_info.);
-		const hashtags: string[] = [];
-		const keywords: string[] = [];
+	private awardPointsForComment(comment_text = "", comment_hashtags: string[] = []): PointsData | null {
+		const post: Post | null = getPost(this.postId);
+		if (!post) {
+			return null;
+		}
+		const {
+			entities: { hashtags, keywords },
+		} = post;
+		console.log(post);
 		const data = {
 			total_hashtags: hashtags.length,
 			total_keywords: keywords.length,
 			hashtags_found: 0,
 			keywords_found: 0,
 			points: 0,
-			total_points: hashtags.length + keywords.length,
+			total_points: (hashtags.length + keywords.length) * 10,
 		};
 
-		if (!comment_text) {
+		if (!comment_text.length) {
 			return data;
 		}
 
@@ -174,7 +178,8 @@ class AnalyzeComment {
 		const countKeywords = keywords.filter((keyword) => comment_text.toLowerCase().includes(keyword.toLowerCase()));
 		data.points += countKeywords.length;
 		data.keywords_found = countKeywords.length;
-
+		data.points *= 10;
+		console.log("line 182", data);
 		return data;
 	}
 

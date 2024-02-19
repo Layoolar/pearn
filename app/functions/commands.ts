@@ -24,7 +24,7 @@ const start = async (): Promise<void> => {
 					writeChatData({ chat_id: config.group_info.chat_id, isRaidOn: false });
 					updateAdminFn(ctx);
 					ctx.replyWithHTML(
-						"<b>Eddy is all setup and ready to go ✅. You can use /admin to get admin guide or /menu to see user commands and buttons</b>",
+						"<b>TAU DGX-1 is all setup and ready to go ✅. You can use /admin to get admin guide or /menu to see user commands and buttons</b>",
 						adminButtonsMarkup,
 					);
 				} else if (getUser(ctx.from.id)) {
@@ -40,7 +40,9 @@ const start = async (): Promise<void> => {
 				);
 			}
 		} else {
-			ctx.replyWithHTML("<b>You need to use /start in a private message to Eddy before you can use commands</b>");
+			ctx.replyWithHTML(
+				"<b>You need to use /start in a private message to TAU DGX-1 before you can use commands</b>",
+			);
 		}
 	});
 };

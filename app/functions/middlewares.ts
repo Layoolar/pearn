@@ -59,7 +59,7 @@ const isValidUserMiddleware: MiddlewareFn<Context> = (ctx, next) => {
 		next();
 	} else {
 		ctx.reply(
-			"<b>You need to use /start in a private message to <a href='tg://resolve?domain=edd_the_tweet_bot&start=/start'>Eddy</a> before you can use commands</b>",
+			"<b>You need to use /start in a private message to <a href='tg://resolve?domain=edd_the_tweet_bot&start=/start'>TAU DGX-1</a> before you can use commands</b>",
 			{
 				parse_mode: "HTML",
 			},
@@ -118,7 +118,7 @@ const isRaidOnMiddleware: MiddlewareFn<Context> = (ctx, next) => {
 	if (allowed) {
 		next();
 	} else {
-		ctx.replyWithHTML("<b>Raid has ended, lookout for the next one</b>");
+		ctx.replyWithHTML("<b>Campaign has ended, lookout for the next one</b>");
 	}
 };
 

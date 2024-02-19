@@ -21,7 +21,6 @@ import {
 import { bot } from "@app/functions/wizards";
 import { AnalyzeComment } from "@app/functions/analyzeComment";
 import { generateComment } from "@app/functions/gpt";
-import { MockFetch } from "@app/functions/twitter_utils";
 
 // Button actions
 bot.action("set_post", isValidUserMiddleware, isAdminMiddleware, async (ctx) => {
@@ -41,10 +40,18 @@ bot.action("submit_twitter", isValidUserMiddleware, async (ctx) => {
 });
 
 bot.action("generate_comment", isValidUserMiddleware, isRaidOnMiddleware, async (ctx) => {
-	const st =
-		"I almost missed out on this $2500 Optimism chain airdrop! I just found out I was eligible. Check if there are any unknown airdrops you are eligible for on here 👀👇";
-	const kw = ["missed", "airdrops", "eligible"];
-	const ht = ["#Ethereum", "#Optimism", "#Cryptocurrency"];
+	const chat_data = getChatData(config.group_info.chat_id);
+	if (!chat_data || !chat_data.latestRaidPostId) {
+		return;
+	}
+	const post = getPost(chat_data.latestRaidPostId);
+	if (!post) {
+		ctx.reply(`No post set`);
+		return;
+	}
+	const kw = post.entities.keywords;
+	const ht = post.entities.hashtags;
+	const st = post.entities.comment_sample;
 	if (ctx.from) {
 		try {
 			const comment = await generateComment(st, kw, ht);
@@ -61,12 +68,12 @@ bot.action("list_raids", isValidUserMiddleware, async (ctx) => {
 	if (chatData && chatData.latestRaidPostId) {
 		const post = getPost(chatData.latestRaidPostId);
 		if (post) {
-			ctx.replyWithHTML(`<b>Current raid\n${post.post_link}</b>`, joinRaidButtonMarkup);
+			ctx.replyWithHTML(`<b>Current campaign\n${post.post_link}</b>`, joinRaidButtonMarkup);
 		} else {
 			ctx.replyWithHTML("<i>An error occured, please inform an admin about this error</i>");
 		}
 	} else {
-		ctx.replyWithHTML("<b>There is no ongoing raid</b>");
+		ctx.replyWithHTML("<b>There is no ongoing campaign</b>");
 	}
 });
 
@@ -174,7 +181,7 @@ bot.action("start_raid", isAdminMiddleware, async (ctx) => {
 		}
 		if (chat_data.isRaidOn) {
 			ctx.reply(
-				`A raid is on at the moment, please wait for the current raid to end before starting another one`,
+				`A campaign is on at the moment, please wait for the current campaign to end before starting another one`,
 			);
 			return;
 		}
@@ -191,9 +198,8 @@ bot.action("start_raid", isAdminMiddleware, async (ctx) => {
 				});
 				writeChatData({ chat_id: config.group_info.chat_id, isRaidOn: false });
 				if (chat_data.latestRaidPostId) {
-					// const startCheck = new AnalyzeComment(chat_data.latestRaidPostId);
-					// startCheck.start();
-					new MockFetch().start(ctx);
+					const startCheck = new AnalyzeComment(chat_data.latestRaidPostId);
+					startCheck.start();
 				}
 			}
 		}, duration);

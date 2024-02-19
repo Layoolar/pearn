@@ -35,7 +35,7 @@ stepHandler.action("confirm", async (ctx) => {
 			writePost(post);
 			writeChatData({ chat_id: config.group_info.chat_id, latestRaidPostId: post_id });
 			ctx.replyWithHTML(
-				`New post set, use the button below to start the raid\n${ctx.scene.session.store.post.link}`,
+				`New post set, use the button below to start the campaign\n${ctx.scene.session.store.post.link}`,
 				startRaidButtonMarkup,
 			);
 		} else {
@@ -68,7 +68,9 @@ export const postWizard = new Scenes.WizardScene<WizardContext>(
 		if (!ctx.from) {
 			return await ctx.scene.leave();
 		}
-		await ctx.replyWithHTML("<b>Step 2</b>\nPlease submit the hashtags. Make sure they start with a '#' and are comma separated");
+		await ctx.replyWithHTML(
+			"<b>Step 2</b>\nPlease submit the hashtags. Make sure they start with a '#' and are comma separated",
+		);
 		if (ctx.message && "text" in ctx.message) {
 			ctx.scene.session.store.post.link = ctx.message?.text || "";
 		}
@@ -82,7 +84,9 @@ export const postWizard = new Scenes.WizardScene<WizardContext>(
 			const tags = collectWords(ctx.message.text);
 			if (startsWithTag(tags)) {
 				ctx.scene.session.store.post.hashtags = collectWords(ctx.message.text);
-				await ctx.replyWithHTML("<b>Step 3</b>\nPlease submit the keywords. Make sure they are comma separated");
+				await ctx.replyWithHTML(
+					"<b>Step 3</b>\nPlease submit the keywords. Make sure they are comma separated",
+				);
 				return ctx.wizard.next();
 			} else {
 				await ctx.replyWithHTML(
