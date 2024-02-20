@@ -7,7 +7,7 @@ import { submitTwitterButtonMarkup } from "./button";
 import fs from "fs";
 
 // Middlewares
-const errorLoggerMiddleware = async (ctx: Context, next: () => Promise<unknown>) => {
+const errorLoggerMiddleware: MiddlewareFn<Context> = async (ctx, next) => {
 	try {
 		await next();
 	} catch (error) {

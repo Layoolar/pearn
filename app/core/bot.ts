@@ -18,6 +18,6 @@ import * as command from "@app/functions/commands";
 	await command.menu();
 	await command.info();
 	await command.quit();
-
 	await command.launch();
+	await command.error();
 })();

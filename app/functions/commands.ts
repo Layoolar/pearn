@@ -6,6 +6,7 @@ import { updateAdminFn } from "@app/functions/shared";
 import config from "@configs/config";
 import { adminButtonsMarkup, submitTwitterButtonMarkup, userButtonsMarkup } from "@app/functions/button";
 import { isAdminMiddleware, isCreatorMiddleware, isValidUserMiddleware } from "@app/functions/middlewares";
+import fs from "fs";
 
 /**
  * command: /start
@@ -98,6 +99,20 @@ const menu = async (): Promise<void> => {
 	});
 };
 
+const error = async (): Promise<void> => {
+	bot.catch((err, ctx) => {
+		const { error } = console;
+		error(`Error in ${ctx.updateType}`, err);
+		ctx.reply("An error occurred while processing your request.");
+		if (error instanceof Error) {
+			fs.appendFileSync("error.log", `${new Date().toISOString()}: ${error.stack}\n`);
+		} else {
+			fs.appendFileSync("error.log", `${new Date().toISOString()}: ${error}\n`);
+		}
+		ctx.reply("An error occured. Please try again later. If error persists, contact the admin");
+	});
+};
+
 /**
  * Run bot
  * =====================
@@ -113,4 +128,4 @@ const launch = async (): Promise<void> => {
 	}
 };
 
-export { launch, start, quit, adminMenu, menu, info };
+export { launch, start, quit, adminMenu, menu, info, error };

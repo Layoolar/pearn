@@ -34,11 +34,5 @@ interface WizardContext extends Context {
 
 const bot = new Telegraf<WizardContext>(configs.telegram.token);
 
-bot.catch((err: unknown, ctx: WizardContext) => {
-	const { error } = console;
-	error(`Error in ${ctx.updateType}`, err);
-	ctx.reply("An error occurred while processing your request.");
-});
-
 export { WizardContext };
 export default bot;
