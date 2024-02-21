@@ -51,15 +51,17 @@ const clearDB = (): void => {
 	dataDB.get("points").remove().write();
 	dataDB.get("posts").remove().write();
 	dataDB.get("comments").remove().write();
-	configDB.assign({
-		config: {
-			chat_id: 0,
-			chat_tite: "",
-			creator_id: 0,
-			campaign_duration: 900000,
-			token_lifetime: 60000
-		}
-	}).write();
+	configDB
+		.assign({
+			config: {
+				chat_id: 0,
+				chat_tite: "",
+				creator_id: 0,
+				campaign_duration: 900000,
+				token_lifetime: 60000,
+			},
+		})
+		.write();
 };
 
 /**
