@@ -4,6 +4,7 @@ import {
 	clearDB,
 	getConfig,
 	getToken,
+	storeToken,
 	getUser,
 	setConfig,
 	writeAdmin,
@@ -103,6 +104,7 @@ const addAdmin = async (): Promise<void> => {
 				if (token === storedToken.token) {
 					const prevConfig = getConfig();
 					writeAdmin({ chat_id: prevConfig.chat_id, user_id: ctx.from.id, status: "administrator" });
+					storeToken(null);
 				} else {
 					ctx.replyWithHTML("<i>Your token is invalid</i>");
 				}

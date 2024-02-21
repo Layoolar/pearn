@@ -39,7 +39,7 @@ configDB
 			chat_title: "",
 			creator_id: 0,
 			campaign_duration: 15 * 60 * 1000,
-			token_lifetime: 15 * 60 * 1000,
+			token_lifetime: 60 * 1000,
 		},
 	})
 	.write();
@@ -147,9 +147,7 @@ const getChatData = (chat_id: string | number): ChatData | null => {
  */
 const writeAdmin = async (admin_data: Admin): Promise<void> => {
 	const exists = dataDB.get("admins").find({ user_id: admin_data.user_id }).value();
-	if (exists) {
-		dataDB.get("admins").find({ user_id: admin_data.user_id }).assign(admin_data).write();
-	} else {
+	if (!exists) {
 		dataDB.get("admins").push(admin_data).write();
 	}
 };

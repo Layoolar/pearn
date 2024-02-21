@@ -70,20 +70,21 @@ bot.action("generate_comment", isValidUserMiddleware, isRaidOnMiddleware, async 
 bot.action("generate_token", isAdminMiddleware, async (ctx) => {
 	if (ctx.chat && ctx.chat.type === "private") {
 		const command = "openssl rand -base64 32";
+		const config = getConfig();
+		let output = "";
 		try {
-			const config = getConfig();
-			const output = await makeTerminalRequest(command);
-			ctx.replyWithHTML(`<b>Your token has been generated</b>`);
-			ctx.replyWithHTML(`<b>${output}</b>`);
-			storeToken({ date: new Date().toISOString(), token: output });
-			const expiryTimeout = setTimeout(() => {
-				storeToken(null);
-			}, config.token_lifetime);
-			expiryTimeout;
+			output = await makeTerminalRequest(command);
 		} catch (error) {
 			writeLog("keygen_error.log", `${new Date().toLocaleString()}: ${error}\n`);
 			ctx.replyWithHTML("<i>An error occured while generating key, please try again</i>");
+			return;
 		}
+		const expiryTimeout = setTimeout(() => {
+			storeToken(null);
+		}, config.token_lifetime);
+		expiryTimeout;
+		ctx.replyWithHTML(`<b>${output}</b>`);
+		storeToken({ date: new Date().toISOString(), token: output });
 	} else {
 		ctx.replyWithHTML("<i>This command can only be used in private chat</i>");
 	}
