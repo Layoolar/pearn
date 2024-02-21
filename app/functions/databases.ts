@@ -22,12 +22,49 @@ import lowdbFileSync from "lowdb/adapters/FileSync";
 
 const usersAdapter = new lowdbFileSync<DatabaseSchema>(configs.databases.users);
 const dataAdapter = new lowdbFileSync<DatabaseSchema>(configs.databases.data);
+const configAdapter = new lowdbFileSync<DatabaseSchema>(configs.databases.config);
 
 const usersDB = lowdb(usersAdapter);
 const dataDB = lowdb(dataAdapter);
+const configDB = lowdb(configAdapter);
 
 usersDB.defaults({ users: [] }).write();
-dataDB.defaults({ chat_data: [], admins: [], points: [], posts: [], comments: [] }).write();
+dataDB.defaults({ chat_data: [], admins: [], points: [], posts: [], comments: [], tokens: [] }).write();
+configDB.defaults({ config: { chat_id: 0, chat_title: "", creator_id: 0 } }).write();
+
+const clearDB = (): void => {
+	usersDB.get("users").remove().write();
+	dataDB.get("chat_data").remove().write();
+	dataDB.get("admins").remove().write();
+	dataDB.get("points").remove().write();
+	dataDB.get("posts").remove().write();
+	dataDB.get("comments").remove().write();
+};
+
+/**
+ * setConfig()
+ * =====================
+ * stores app config to db
+ *
+ * @param {{} | null} config_data - token object
+ * @param {number} config_data.chat_id - chat Id
+ * @param {string} config_data.chat_title - chat title
+ * @param {number} config_data.creator_id - creatConfig
+ */
+const setConfig = (config_data: { chat_id: number; chat_title: string; creator_id: number }): void => {
+	configDB.assign({ config: config_data }).write();
+};
+
+/**
+ * getConfig()
+ * =====================
+ * Get the config from the database
+ *
+ * @return {{ chat_id: number; chat_title: string; creator_id: number } | null} - The config object if found, or null if not found.
+ */
+const getConfig = (): { chat_id: number; chat_title: string; creator_id: number } => {
+	return configDB.get("config").value();
+};
 
 /**
  * writeUser()
@@ -104,6 +141,24 @@ const writeAdmins = async (admin_data: Admin[]): Promise<void> => {
 };
 
 /**
+ * writeAdmin()
+ * =====================
+ * Write admin information from telegram context to user database
+ *
+ * @param { Admin } admin_data - Telegram admin object
+ *
+ * @return {Promise<void>} - A Promise that resolves when the operation is complete.
+ */
+const writeAdmin = async (admin_data: Admin): Promise<void> => {
+	const exists = dataDB.get("admins").find({ user_id: admin_data.user_id }).value();
+	if (exists) {
+		dataDB.get("admins").find({ user_id: admin_data.user_id }).assign(admin_data).write();
+	} else {
+		dataDB.get("admins").push(admin_data).write();
+	}
+};
+
+/**
  * getAdmin()
  * =====================
  * Get admin information from the database
@@ -113,7 +168,8 @@ const writeAdmins = async (admin_data: Admin[]): Promise<void> => {
  * @return {Admin | null} - An admin object or null
  */
 const getAdmin = (user_id: number): Admin | null => {
-	return dataDB.get("admins").find({ user_id, chat_id: configs.group_info.chat_id }).value();
+	const config = getConfig();
+	return dataDB.get("admins").find({ user_id, chat_id: config.chat_id }).value();
 };
 
 /**
@@ -128,7 +184,6 @@ const getAdmin = (user_id: number): Admin | null => {
  */
 const writePoint = async (userId: number, points: number): Promise<void> => {
 	const userPoints = dataDB.get("points").find({ user_id: userId }).value();
-
 	if (userPoints) {
 		dataDB
 			.get("points")
@@ -260,7 +315,40 @@ const deleteComments = (post_id: string): void => {
 	dataDB.get("comments").remove({ post_id }).write();
 };
 
+/**
+ * storeToken()
+ * =====================
+ * stores a token to the database
+ *
+ * @param {{}[] | []} token_data - token object
+ * @param { string } token_data.date - token date
+ * @param { string } token_data.token - token string
+ *
+ * @return {Promise<void>} - A Promise that resolves when the operation is complete.
+ */
+const storeToken = async (token_data: { date: string; token: string }[] | []): Promise<void> => {
+	dataDB.set("tokens", token_data).write();
+};
+
+/**
+ * getToken()
+ * =====================
+ * Get the token from the database
+ *
+ * @return { { date: string; token: string } | null } - The token object if found, or null if not found.
+ */
+const getToken = (): { date: string; token: string } | null => {
+	const exists = dataDB.get("tokens").value();
+	if (!exists.length) {
+		return null;
+	}
+	return exists[0];
+};
+
 export {
+	clearDB,
+	setConfig,
+	getConfig,
 	usersDB,
 	dataDB,
 	Admin,
@@ -269,6 +357,7 @@ export {
 	writeUser,
 	getUser,
 	writeAdmins,
+	writeAdmin,
 	getAdmin,
 	writePoint,
 	getTop10Points,
@@ -281,4 +370,6 @@ export {
 	getComments,
 	getCommentSize,
 	deleteComments,
+	storeToken,
+	getToken,
 };

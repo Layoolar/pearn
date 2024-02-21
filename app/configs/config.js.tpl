@@ -9,11 +9,7 @@ module.exports = {
 		token: "BOT_TOKEN",
 	},
 
-	"group_info": { // from @edd_tweet_bot /info on telegram
-		chat_id: TELEGRAM_GROUP_ID,
-		chat_title: TELEGRAM_GROUP_TITLE,
-		creator_id: TELEGRAM_GROUP_CREATOR_ID,
-	},
+	"owner_secret_key": OWNER_SECRET_KEY,
 
 	twitter: {
 		consumer_key: "TWITTER_CONSUMER_KEY",

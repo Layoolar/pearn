@@ -99,7 +99,7 @@ export type ChatData = {
 export type Admin = {
 	chat_id: string | number;
 	user_id: number;
-	status?: "creator" | "administrator" | "member" | "restricted" | "left" | "kicked";
+	status?: "creator" | "administrator";
 };
 
 export type Post = {
@@ -133,4 +133,6 @@ export type DatabaseSchema = {
 	points: Point[];
 	posts: Post[];
 	comments: CommentDBData[];
+	tokens: { date: string; token: string }[];
+	config: { chat_id: number; chat_title: string; creator_id: number };
 };

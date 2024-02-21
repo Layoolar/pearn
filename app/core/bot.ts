@@ -14,9 +14,11 @@ import * as command from "@app/functions/commands";
  */
 (async () => {
 	await command.start();
+	await command.configure();
+	await command.eraseDB();
 	await command.adminMenu();
+	await command.addAdmin();
 	await command.menu();
-	await command.info();
 	await command.quit();
 	await command.launch();
 	await command.error();

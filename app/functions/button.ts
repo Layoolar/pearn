@@ -3,11 +3,11 @@ import { Markup } from "telegraf";
 // Admin buttons
 export const setPostButton = Markup.button.callback("Set post", "set_post");
 export const startRaidButton = Markup.button.callback("Start campaign", "start_raid");
-export const updateAdminButton = Markup.button.callback("Update admin", "update_admin");
 export const postsButton = Markup.button.callback("Posts", "posts");
-export const adminButtonsMarkup = Markup.inlineKeyboard([[setPostButton, postsButton], [updateAdminButton]]);
+export const generateTokenButton = Markup.button.callback("Generate token", "generate_token");
 export const startRaidButtonMarkup = Markup.inlineKeyboard([startRaidButton]);
 export const setPostButtonMarkup = Markup.inlineKeyboard([setPostButton]);
+export const adminButtonsMarkup = Markup.inlineKeyboard([[setPostButton, postsButton], [generateTokenButton]]);
 // User buttons
 export const helpButton = Markup.button.callback("Help", "help");
 export const pointsButton = Markup.button.callback("Points", "points");

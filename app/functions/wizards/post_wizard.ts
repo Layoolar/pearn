@@ -1,8 +1,7 @@
 import { Composer, Markup, Scenes } from "telegraf";
 import { WizardContext } from "@app/functions/telegraf";
-import { Post, writeChatData, writePost } from "@app/functions/databases";
+import { Post, getConfig, writeChatData, writePost } from "@app/functions/databases";
 import { collectWords, extractId, startsWithTag } from "@app/functions/utils";
-import config from "@configs/config";
 import { setPostButtonMarkup, startRaidButtonMarkup } from "@app/functions/button";
 
 const initialData = {
@@ -33,7 +32,8 @@ stepHandler.action("confirm", async (ctx) => {
 				},
 			};
 			writePost(post);
-			writeChatData({ chat_id: config.group_info.chat_id, latestRaidPostId: post_id });
+			const config = getConfig();
+			writeChatData({ chat_id: config.chat_id, latestRaidPostId: post_id });
 			ctx.replyWithHTML(
 				`New post set, use the button below to start the campaign\n${ctx.scene.session.store.post.link}`,
 				startRaidButtonMarkup,

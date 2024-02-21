@@ -1,8 +1,7 @@
 import { Composer, Markup, Scenes } from "telegraf";
 import { WizardContext } from "@app/functions/telegraf";
 import { extractId, extractUsername } from "@app/functions/utils";
-import { getChatData, getUser, writeComment } from "@app/functions/databases";
-import config from "@configs/config";
+import { getChatData, getConfig, getUser, writeComment } from "@app/functions/databases";
 
 const initialData = {
 	post: {
@@ -22,7 +21,8 @@ stepHandler.action("confirm", async (ctx) => {
 		const commentId = extractId(commentLink);
 		const username = extractUsername(commentLink);
 		if (commentId && `@${username}` === getUser(ctx.from.id)?.twitter_username) {
-			const chatData = getChatData(config.group_info.chat_id);
+			const config = getConfig();
+			const chatData = getChatData(config.chat_id);
 			if (chatData?.latestRaidPostId) {
 				if (!chatData.isRaidOn) {
 					await ctx.replyWithHTML("<b>Too slow, the campaign has ended, look out for the next one</b>");

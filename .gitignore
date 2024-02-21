@@ -127,5 +127,6 @@ npm-debug.log
 /dist
 /build
 /certs
+/errors
 
 ./TODO.md

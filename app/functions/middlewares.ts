@@ -1,26 +1,58 @@
-import { getAdmin, getChatData, getUser } from "@app/functions/databases";
-import config from "@configs/config";
+import { getAdmin, getChatData, getConfig, getUser } from "@app/functions/databases";
 import bot from "@app/functions/telegraf";
 import { Context, MiddlewareFn } from "telegraf";
-import { updateAdminFn } from "@app/functions/shared";
 import { submitTwitterButtonMarkup } from "./button";
-import fs from "fs";
+import writeLog from "./logger";
 
 // Middlewares
+// Logging middleware
+const eventLoggingMiddleware: MiddlewareFn<Context> = (ctx, next) => {
+	const start = Date.now();
+	const timestamp = () => new Date().toLocaleString();
+	const userId = ctx.from?.id;
+	const chatId = ctx.chat?.id;
+	const username = ctx.from?.username || ctx.from?.first_name;
+	const ut = ctx.updateType;
+
+	if ("message" in ctx.update && "text" in ctx.update.message) {
+		const command = ctx.update.message?.text;
+		writeLog(
+			"events.log",
+			`[${timestamp()}] UT-[${ut}] Request from ${username || "UnknownUser"} (ID: ${userId}) in chat ${chatId}: ${
+				command || "No command"
+			}\n`,
+		);
+	} else {
+		writeLog(
+			"events.log",
+			`Received an update UT-[${ut}]\n[${timestamp()}] UT-[${ut}] Request from ${
+				username || "UnknownUser"
+			} (ID: ${userId}) in chat ${chatId}\n`,
+		);
+	}
+	next().then(() => {
+		const ms = Date.now() - start;
+		writeLog("events.log", `Request processed ${ut} in ${ms}ms\n`);
+	});
+};
+
 const errorLoggerMiddleware: MiddlewareFn<Context> = async (ctx, next) => {
 	try {
 		await next();
 	} catch (error) {
 		if (error instanceof Error) {
-			fs.appendFileSync("error.log", `${new Date().toISOString()}: ${error.stack}\n`);
-			ctx.reply("An error occurred. Please try again later.");
+			writeLog("error.log", `${new Date().toLocaleString()}: ${error.stack}\n`);
+		} else {
+			writeLog("error.log", `${new Date().toLocaleString()}: ${error}\n`);
 		}
+		ctx.reply("An error occurred. Please try again later. If error persists, please contact an admin");
 	}
 };
 
 // Middleware to check if the message is from the authorized group
 const isFromAuthorizedGroupMiddleware: MiddlewareFn<Context> = (ctx, next) => {
-	if (ctx.chat && ctx.chat.type !== "private" && ctx.chat.id === config.group_info.chat_id) {
+	const config = getConfig();
+	if (ctx.chat && ctx.chat.type !== "private" && ctx.chat.id === config.chat_id) {
 		next();
 	} else {
 		ctx.reply("This command can only be used in the authorized group");
@@ -41,15 +73,10 @@ const isValidUserMiddleware: MiddlewareFn<Context> = (ctx, next) => {
 	}
 };
 
-// Middleware to update admin status
-const updateAdminMiddleware: MiddlewareFn<Context> = (ctx, next) => {
-	updateAdminFn(ctx);
-	next();
-};
-
 // Middleware to check if user is creator
 const isCreatorMiddleware: MiddlewareFn<Context> = (ctx, next) => {
-	if (ctx.from && ctx.from.id === config.group_info.creator_id) {
+	const config = getConfig();
+	if (ctx.from && ctx.from.id === config.creator_id) {
 		next();
 	} else {
 		ctx.reply("Requires creator permission");
@@ -59,8 +86,9 @@ const isCreatorMiddleware: MiddlewareFn<Context> = (ctx, next) => {
 // Middleware to check if user is admin
 const isAdminMiddleware: MiddlewareFn<Context> = (ctx, next) => {
 	if (ctx.from) {
+		const config = getConfig();
 		const admin = getAdmin(ctx.from.id);
-		if (admin || ctx.from.id === config.group_info.creator_id) {
+		if (ctx.from.id === config.creator_id || admin) {
 			next();
 		} else {
 			ctx.reply("You need administrative permissions to use this command");
@@ -88,7 +116,8 @@ const hasSubmittedTwitterMiddleware: MiddlewareFn<Context> = (ctx, next) => {
 
 // Allow users to use submit command when raid is on
 const isRaidOnMiddleware: MiddlewareFn<Context> = (ctx, next) => {
-	const allowed = getChatData(config.group_info.chat_id)?.isRaidOn;
+	const config = getConfig();
+	const allowed = getChatData(config.chat_id)?.isRaidOn;
 	if (allowed) {
 		next();
 	} else {
@@ -96,13 +125,12 @@ const isRaidOnMiddleware: MiddlewareFn<Context> = (ctx, next) => {
 	}
 };
 
-bot.use(errorLoggerMiddleware);
+bot.use(eventLoggingMiddleware, errorLoggerMiddleware);
 
 export {
 	bot,
 	isFromAuthorizedGroupMiddleware,
 	isValidUserMiddleware,
-	updateAdminMiddleware,
 	isAdminMiddleware,
 	isCreatorMiddleware,
 	hasSubmittedTwitterMiddleware,

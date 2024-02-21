@@ -19,11 +19,16 @@ const adminCommand = `
 <b>Admin guide</b>
 - <b>/admin</b>
   - <i>Description:</i> Display admin commands
+- <b>/configure</b>
+  - <i>Description:</i> Creator only command to setup bot in a group or supergroup 
+- <b>/add_admin [token]</b>
+  - <i>Description:</i> New admins use this to get authenticated by the bot
 
 <b>Button description</b>
   🔹 <b>Set post:</b> Use this button to set a new post for the campaign.
   🔹 <b>Start campaign:</b> Click here to start the campaign with the current set post.
-  🔹 <b>Update admin:</b> Inform the bot that a new administator has been added..
+  🔹 <b>Update admin:</b> Inform the bot that a new administator has been added.
+  🔹 <b>Generate token:</b> Use this to generate tokens for new admins to get recognized by the bot.
   🔹 <b>Posts:</b> View the list of previous campaign posts.
 `;
 

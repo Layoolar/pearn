@@ -1,4 +1,4 @@
-import config from "@app/configs/config";
+import { AnalyzeComment } from "@app/functions/analyzeComment";
 import { joinRaidButtonMarkup, userButtonsMarkup } from "@app/functions/button";
 import {
 	Post,
@@ -6,23 +6,25 @@ import {
 	getAdmin,
 	getChatData,
 	getCommentSize,
+	getConfig,
 	getPost,
 	getPosts,
 	getTop10Points,
 	getUser,
+	storeToken,
 	writeChatData,
 } from "@app/functions/databases";
+import { generateComment } from "@app/functions/gpt";
 import { helpMessage, raidEnd, raidMessage } from "@app/functions/messages";
 import {
 	hasSubmittedTwitterMiddleware,
 	isAdminMiddleware,
 	isRaidOnMiddleware,
 	isValidUserMiddleware,
-	updateAdminMiddleware,
 } from "@app/functions/middlewares";
 import { bot } from "@app/functions/wizards";
-import { AnalyzeComment } from "@app/functions/analyzeComment";
-import { generateComment } from "@app/functions/gpt";
+import writeLog from "./logger";
+import makeTerminalRequest from "./terminal";
 
 // Button actions
 bot.action("set_post", isValidUserMiddleware, isAdminMiddleware, async (ctx) => {
@@ -42,7 +44,8 @@ bot.action("submit_twitter", isValidUserMiddleware, async (ctx) => {
 });
 
 bot.action("generate_comment", isValidUserMiddleware, isRaidOnMiddleware, async (ctx) => {
-	const chat_data = getChatData(config.group_info.chat_id);
+	const config = getConfig();
+	const chat_data = getChatData(config.chat_id);
 	if (!chat_data || !chat_data.latestRaidPostId) {
 		return;
 	}
@@ -64,8 +67,30 @@ bot.action("generate_comment", isValidUserMiddleware, isRaidOnMiddleware, async 
 	}
 });
 
+bot.action("generate_token", isAdminMiddleware, async (ctx) => {
+	if (ctx.chat && ctx.chat.type === "private") {
+		const command = "openssl rand -base64 32";
+		try {
+			const output = await makeTerminalRequest(command);
+			storeToken([{ date: new Date().toISOString(), token: output }]);
+			const expiryTimeout = setTimeout(() => {
+				storeToken([]);
+			}, 15 * 60 * 1000);
+			ctx.replyWithHTML(`<b>Your token has been generated</b>`);
+			ctx.replyWithHTML(`<b>${output}</b>`);
+			expiryTimeout;
+		} catch (error) {
+			writeLog("keygen_error.log", `${new Date().toLocaleString()}: ${error}\n`);
+			ctx.replyWithHTML("<i>An error occured while generating key, please try again</i>");
+		}
+	} else {
+		ctx.replyWithHTML("<i>This command can only be used in private chat</i>");
+	}
+});
+
 bot.action("list_raids", isValidUserMiddleware, async (ctx) => {
-	const chatData = getChatData(config.group_info.chat_id);
+	const config = getConfig();
+	const chatData = getChatData(config.chat_id);
 	if (chatData && chatData.latestRaidPostId) {
 		const post = getPost(chatData.latestRaidPostId);
 		if (post) {
@@ -138,20 +163,17 @@ bot.action("leaderboard", isValidUserMiddleware, (ctx) => {
 	}
 });
 
-bot.action("update_admins", isAdminMiddleware, updateAdminMiddleware, (ctx) => {
-	ctx.replyWithHTML("<b>The admins have been updated successfully ✅.</b>");
-});
-
 bot.action("start_raid", isAdminMiddleware, async (ctx) => {
 	if (ctx.chat && ctx.chat.type !== "private") {
 		ctx.reply("You need to use this command privately");
 		return;
 	}
 	if (ctx.chat && ctx.from) {
-		const chat_data = getChatData(config.group_info.chat_id);
+		const config = getConfig();
+		const chat_data = getChatData(config.chat_id);
 		const admin = getAdmin(ctx.from.id);
 		if (!chat_data || !admin) {
-			ctx.reply("You're not an admin in group {group_title}");
+			ctx.reply(`You're not an admin in group ${config.chat_title}`);
 			return;
 		}
 		if (chat_data.isRaidOn) {
@@ -165,13 +187,14 @@ bot.action("start_raid", isAdminMiddleware, async (ctx) => {
 			return;
 		}
 
+		// BUG Change duration to 15 mins
 		const duration = 80 * 1000;
 		const raidTimeout = setTimeout(() => {
 			if (post) {
-				ctx.telegram.sendMessage(config.group_info.chat_id, raidEnd(getCommentSize(post.post_id)), {
+				ctx.telegram.sendMessage(config.chat_id, raidEnd(getCommentSize(post.post_id)), {
 					parse_mode: "HTML",
 				});
-				writeChatData({ chat_id: config.group_info.chat_id, isRaidOn: false });
+				writeChatData({ chat_id: config.chat_id, isRaidOn: false });
 				if (chat_data.latestRaidPostId) {
 					const startCheck = new AnalyzeComment(chat_data.latestRaidPostId);
 					startCheck.start();
@@ -187,7 +210,7 @@ bot.action("start_raid", isAdminMiddleware, async (ctx) => {
 			return;
 		}
 		writeChatData({ ...chat_data, isRaidOn: true });
-		ctx.telegram.sendMessage(config.group_info.chat_id, raidMessage(post.post_link), {
+		ctx.telegram.sendMessage(config.chat_id, raidMessage(post.post_link), {
 			parse_mode: "HTML",
 		});
 	}

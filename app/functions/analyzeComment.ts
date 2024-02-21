@@ -2,7 +2,7 @@ import { CommentDBData, Post } from "@app/types/databases.type";
 import { ReferencedTweetV2, TwitterApi } from "twitter-api-v2";
 import { getPost, deleteComments, getComments, writePoint } from "@app/functions/databases";
 import config from "@configs/config";
-import fs from "fs";
+import writeLog from "./logger";
 
 type CommentData = {
 	user_id: number;
@@ -83,12 +83,12 @@ class AnalyzeComment {
 					if ((data as CommentData).user_id && (data as CommentData).points) {
 						writePoint((data as CommentData).user_id, (data as CommentData).points);
 					}
+				} else {
+					writeLog("unfetched_comments.log", `${new Date().toLocaleString()}: ${error}\n`);
 				}
 			}
 		} catch (error) {
-			if (error instanceof Error) {
-				fs.appendFileSync("fetch_error.log", `${new Date().toISOString()}: ${error}\n`);
-			}
+			writeLog("fetch_error.log", `${new Date().toLocaleString()}: ${error}\n`);
 		} finally {
 			this.destroy();
 		}
@@ -125,7 +125,7 @@ class AnalyzeComment {
 		} catch (e) {
 			const errors = TwitterApi.getErrors(e);
 			for (const err of errors) {
-				fs.appendFileSync("fetch_error.log", `${new Date().toISOString()}: ${err}\n`);
+				writeLog("fetch_error.log", `${new Date().toLocaleString()}: ${err}\n`);
 				const respObj: ResponseObject<unknown> = {
 					error: true,
 					data: err,
