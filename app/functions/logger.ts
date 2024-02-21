@@ -1,5 +1,4 @@
 import * as fs from "fs";
-import config from "@configs/config";
 
 declare const __dirname: string;
 
