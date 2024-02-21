@@ -39,7 +39,7 @@ const start = async (): Promise<void> => {
 				return;
 			}
 			if (prevConfig.creator_id === 0 || prevConfig.chat_id === 0) {
-				ctx.reply("Bot not configured in this group yet");
+				ctx.reply("Bot not configured yet");
 				return;
 			}
 			const chatMember = await ctx.telegram.getChatMember(prevConfig.chat_id, ctx.from.id);

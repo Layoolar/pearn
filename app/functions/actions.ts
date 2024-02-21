@@ -71,13 +71,14 @@ bot.action("generate_token", isAdminMiddleware, async (ctx) => {
 	if (ctx.chat && ctx.chat.type === "private") {
 		const command = "openssl rand -base64 32";
 		try {
+			const config = getConfig();
 			const output = await makeTerminalRequest(command);
-			storeToken([{ date: new Date().toISOString(), token: output }]);
-			const expiryTimeout = setTimeout(() => {
-				storeToken([]);
-			}, 15 * 60 * 1000);
 			ctx.replyWithHTML(`<b>Your token has been generated</b>`);
 			ctx.replyWithHTML(`<b>${output}</b>`);
+			storeToken({ date: new Date().toISOString(), token: output });
+			const expiryTimeout = setTimeout(() => {
+				storeToken(null);
+			}, config.token_lifetime);
 			expiryTimeout;
 		} catch (error) {
 			writeLog("keygen_error.log", `${new Date().toLocaleString()}: ${error}\n`);
@@ -147,7 +148,7 @@ bot.action("leaderboard", isValidUserMiddleware, (ctx) => {
 		const topUsers = points.map((point) => {
 			const user = getUser(point.user_id);
 			return {
-				username: user?.username || user?.first_name || user?.twitter_username || "Anonymous user",
+				username: user?.twitter_username || user?.first_name || user?.username || "Anonymous user",
 				points: point.points,
 			};
 		});
@@ -187,8 +188,6 @@ bot.action("start_raid", isAdminMiddleware, async (ctx) => {
 			return;
 		}
 
-		// BUG Change duration to 15 mins
-		const duration = 80 * 1000;
 		const raidTimeout = setTimeout(() => {
 			if (post) {
 				ctx.telegram.sendMessage(config.chat_id, raidEnd(getCommentSize(post.post_id)), {
@@ -200,7 +199,7 @@ bot.action("start_raid", isAdminMiddleware, async (ctx) => {
 					startCheck.start();
 				}
 			}
-		}, duration);
+		}, config.campaign_duration);
 
 		// Starting the timeout
 		raidTimeout;

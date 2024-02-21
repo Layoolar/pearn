@@ -11,10 +11,12 @@ import type {
 	Admin,
 	ChatData,
 	CommentDBData,
+	ConfigData,
 	DatabaseSchema,
 	Point,
 	Post,
 	TelegramUserInterface,
+	TokenData,
 } from "@app/types/databases.type";
 import configs from "@configs/config";
 import lowdb from "lowdb";
@@ -29,8 +31,18 @@ const dataDB = lowdb(dataAdapter);
 const configDB = lowdb(configAdapter);
 
 usersDB.defaults({ users: [] }).write();
-dataDB.defaults({ chat_data: [], admins: [], points: [], posts: [], comments: [], tokens: [] }).write();
-configDB.defaults({ config: { chat_id: 0, chat_title: "", creator_id: 0 } }).write();
+dataDB.defaults({ chat_data: [], admins: [], points: [], posts: [], comments: [], token: null }).write();
+configDB
+	.defaults({
+		config: {
+			chat_id: 0,
+			chat_title: "",
+			creator_id: 0,
+			campaign_duration: 15 * 60 * 1000,
+			token_lifetime: 15 * 60 * 1000,
+		},
+	})
+	.write();
 
 const clearDB = (): void => {
 	usersDB.get("users").remove().write();
@@ -46,12 +58,9 @@ const clearDB = (): void => {
  * =====================
  * stores app config to db
  *
- * @param {{} | null} config_data - token object
- * @param {number} config_data.chat_id - chat Id
- * @param {string} config_data.chat_title - chat title
- * @param {number} config_data.creator_id - creatConfig
+ * @param {ConfigData} config_data - token object
  */
-const setConfig = (config_data: { chat_id: number; chat_title: string; creator_id: number }): void => {
+const setConfig = (config_data: ConfigData): void => {
 	configDB.assign({ config: config_data }).write();
 };
 
@@ -60,9 +69,9 @@ const setConfig = (config_data: { chat_id: number; chat_title: string; creator_i
  * =====================
  * Get the config from the database
  *
- * @return {{ chat_id: number; chat_title: string; creator_id: number } | null} - The config object if found, or null if not found.
+ * @return {ConfigData} - The config object if found, or null if not found.
  */
-const getConfig = (): { chat_id: number; chat_title: string; creator_id: number } => {
+const getConfig = (): ConfigData => {
 	return configDB.get("config").value();
 };
 
@@ -128,19 +137,6 @@ const getChatData = (chat_id: string | number): ChatData | null => {
 };
 
 /**
- * writeAdmins()
- * =====================
- * Write admin information from telegram context to user database
- *
- * @param { Admin } admin_data - Telegram admin object
- *
- * @return {Promise<void>} - A Promise that resolves when the operation is complete.
- */
-const writeAdmins = async (admin_data: Admin[]): Promise<void> => {
-	dataDB.set("admins", admin_data).write();
-};
-
-/**
  * writeAdmin()
  * =====================
  * Write admin information from telegram context to user database
@@ -202,7 +198,7 @@ const writePoint = async (userId: number, points: number): Promise<void> => {
  * @return {Point[]} - top 10 points
  */
 const getTop10Points = (): Point[] => {
-	return dataDB.get("points").sortBy("points").take(10).value();
+	return dataDB.get("points").sortBy("points").take(10).reverse().value();
 };
 
 /**
@@ -320,14 +316,10 @@ const deleteComments = (post_id: string): void => {
  * =====================
  * stores a token to the database
  *
- * @param {{}[] | []} token_data - token object
- * @param { string } token_data.date - token date
- * @param { string } token_data.token - token string
- *
- * @return {Promise<void>} - A Promise that resolves when the operation is complete.
+ * @param {TokenData | null} token_data - token object
  */
-const storeToken = async (token_data: { date: string; token: string }[] | []): Promise<void> => {
-	dataDB.set("tokens", token_data).write();
+const storeToken = (token_data: TokenData | null): void => {
+	dataDB.set("token", token_data).write();
 };
 
 /**
@@ -335,14 +327,10 @@ const storeToken = async (token_data: { date: string; token: string }[] | []): P
  * =====================
  * Get the token from the database
  *
- * @return { { date: string; token: string } | null } - The token object if found, or null if not found.
+ * @return { TokenData | null } - The token object if found, or null if not found.
  */
-const getToken = (): { date: string; token: string } | null => {
-	const exists = dataDB.get("tokens").value();
-	if (!exists.length) {
-		return null;
-	}
-	return exists[0];
+const getToken = (): TokenData | null => {
+	return dataDB.get("token").value();
 };
 
 export {
@@ -356,7 +344,6 @@ export {
 	getChatData,
 	writeUser,
 	getUser,
-	writeAdmins,
 	writeAdmin,
 	getAdmin,
 	writePoint,

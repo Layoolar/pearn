@@ -89,6 +89,16 @@ export interface TelegramUserInterface {
 	twitter_username?: string;
 }
 
+export type ConfigData = {
+	chat_id: number;
+	chat_title: string;
+	creator_id: number;
+	campaign_duration: number;
+	token_lifetime: number;
+};
+
+export type TokenData = { date: string; token: string };
+
 export type ChatData = {
 	chat_id: string | number;
 	chat_title?: string;
@@ -133,6 +143,6 @@ export type DatabaseSchema = {
 	points: Point[];
 	posts: Post[];
 	comments: CommentDBData[];
-	tokens: { date: string; token: string }[];
-	config: { chat_id: number; chat_title: string; creator_id: number };
+	token: TokenData | null;
+	config: ConfigData;
 };
