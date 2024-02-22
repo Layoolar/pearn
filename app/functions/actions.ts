@@ -96,7 +96,10 @@ bot.action("list_raids", isValidUserMiddleware, async (ctx) => {
 	if (chatData && chatData.latestRaidPostId) {
 		const post = getPost(chatData.latestRaidPostId);
 		if (post) {
-			ctx.replyWithHTML(`<b>Current campaign\n${post.post_link}</b>`, joinRaidButtonMarkup);
+			ctx.replyWithHTML(
+				`<b>Current campaign\n${post.post_link}\nKeywords: ${post.entities.keywords}\nHashtags: ${post.entities.hashtags}</b>`,
+				joinRaidButtonMarkup,
+			);
 		} else {
 			ctx.replyWithHTML("<i>An error occured, please inform an admin about this error</i>");
 		}
