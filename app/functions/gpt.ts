@@ -7,7 +7,7 @@ const generateComment = async (
 	hashtags: string[],
 ): Promise<string | null> => {
 	const prompt = `Ignore previous instructions
-		Generate a Twitter comment using a similar context from the sample comment provided below\n${sampleComment}\nThe generated comment must contain the following words\n${keywords}\nIt must also contain the following hashtags\n${hashtags}\nNo negative comments`;
+		Generate a Twitter comment using a similar context from the sample comment provided below\n${sampleComment}\nThe generated comment must contain the following words\n${keywords}\nIt must also contain the following hashtags\n${hashtags}\nNo negative comments\nMake no assumptions`;
 	try {
 		const openAI = new OpenAI({ apiKey: config.openAI.apiKey });
 		const response = await openAI.chat.completions.create({

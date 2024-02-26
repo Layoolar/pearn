@@ -38,7 +38,7 @@ configDB
 			chat_id: 0,
 			chat_title: "",
 			creator_id: 0,
-			campaign_duration: 15 * 60 * 1000,
+			campaign_duration: 5 * 60 * 1000,
 			token_lifetime: 60 * 1000,
 		},
 	})

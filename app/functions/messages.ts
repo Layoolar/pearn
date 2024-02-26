@@ -20,7 +20,7 @@ const adminCommand = `
 - <b>/admin</b>
   - <i>Description:</i> Display admin commands
 - <b>/configure</b>
-  - <i>Description:</i> Creator only command to setup bot in a group or supergroup 
+  - <i>Description:</i> Creator only command to setup bot in a group or supergroup
 - <b>/add_admin [token]</b>
   - <i>Description:</i> New admins use this to get authenticated by the bot
 
@@ -88,10 +88,10 @@ A new campaign has been initiated by the admin. Your mission, should you choose 
 
 To participate:
 1. Click on the Twitter link above to view the tweet.
-2. Head over to <a href="tg://resolve?domain=edd_the_tweet_bot&start=/menu">TAU DGX-1</a> in your private messages and use the list campaigns.
+2. Head over to <a href="tg://resolve?domain=TauDGX1_bot&start=/menu">TAU DGX-1</a> in your private messages and use the list campaigns.
 3. Click on the "Generate Comment" button to generate your uplifting comment.
 4. Post your comment under the tweet within the next 15 minutes.
-5. Return to <a href="tg://resolve?domain=edd_the_tweet_bot&start=/menu">TAU DGX-1</a> and submit the link to your comment.
+5. Return to <a href="tg://resolve?domain=TauDGX1_bot&start=/menu">TAU DGX-1</a> and submit the link to your comment.
 
 Let's make a difference together! 🌟
 `;
