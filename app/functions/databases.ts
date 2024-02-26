@@ -51,6 +51,7 @@ const clearDB = (): void => {
 	dataDB.get("points").remove().write();
 	dataDB.get("posts").remove().write();
 	dataDB.get("comments").remove().write();
+	dataDB.set("token", null).write();
 	configDB
 		.assign({
 			config: {

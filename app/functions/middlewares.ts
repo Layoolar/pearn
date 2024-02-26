@@ -11,7 +11,7 @@ const eventLoggingMiddleware: MiddlewareFn<Context> = (ctx, next) => {
 	const timestamp = () => new Date().toLocaleString();
 	const userId = ctx.from?.id;
 	const chatId = ctx.chat?.id;
-	const username = ctx.from?.username || ctx.from?.first_name;
+	const username = ctx.from?.username || ctx.from?.first_name || ctx.from?.last_name;
 	const ut = ctx.updateType;
 
 	if ("message" in ctx.update && "text" in ctx.update.message) {

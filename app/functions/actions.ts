@@ -11,7 +11,6 @@ import {
 	getPosts,
 	getTop10Points,
 	getUser,
-	resetPoints,
 	storeToken,
 	writeChatData,
 } from "@app/functions/databases";
@@ -52,11 +51,6 @@ bot.action("submit_wallet", isValidUserMiddleware, isPrivateChatMiddleware, asyn
 	await ctx.scene.enter("wallet-wizard");
 });
 
-bot.action("reset_points", isAdminMiddleware, isPrivateChatMiddleware, async (ctx) => {
-	resetPoints();
-	ctx.replyWithHTML("<b>All points have been reset.</b>");
-});
-
 bot.action("generate_comment", isValidUserMiddleware, isPrivateChatMiddleware, isRaidOnMiddleware, async (ctx) => {
 	const config = getConfig();
 	const chat_data = getChatData(config.chat_id);
@@ -82,26 +76,22 @@ bot.action("generate_comment", isValidUserMiddleware, isPrivateChatMiddleware, i
 });
 
 bot.action("generate_token", isAdminMiddleware, isPrivateChatMiddleware, async (ctx) => {
-	if (ctx.chat && ctx.chat.type === "private") {
-		const command = "openssl rand -base64 32";
-		const config = getConfig();
-		let output = "";
-		try {
-			output = await makeTerminalRequest(command);
-		} catch (error) {
-			writeLog("keygen_error.log", `${new Date().toLocaleString()}: ${error}\n`);
-			ctx.replyWithHTML("<i>An error occured while generating key, please try again</i>");
-			return;
-		}
-		const expiryTimeout = setTimeout(() => {
-			storeToken(null);
-		}, config.token_lifetime);
-		expiryTimeout;
-		ctx.replyWithHTML(`<b>${output}</b>`);
-		storeToken({ date: new Date().toISOString(), token: output });
-	} else {
-		ctx.replyWithHTML("<i>This command can only be used in private chat</i>");
+	const command = "openssl rand -base64 32";
+	const config = getConfig();
+	let output = "";
+	try {
+		output = await makeTerminalRequest(command);
+	} catch (error) {
+		writeLog("keygen_error.log", `${new Date().toLocaleString()}: ${error}\n`);
+		ctx.replyWithHTML("<i>An error occured while generating key, please try again</i>");
+		return;
 	}
+	const expiryTimeout = setTimeout(() => {
+		storeToken(null);
+	}, config.token_lifetime);
+	expiryTimeout;
+	ctx.replyWithHTML(`<b>${output}</b>`);
+	storeToken({ date: new Date().toISOString(), token: output });
 });
 
 bot.action("list_raids", isValidUserMiddleware, isPrivateChatMiddleware, async (ctx) => {

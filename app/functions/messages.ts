@@ -24,6 +24,8 @@ const adminCommand = `
   - <i>Description:</i> Creator only command to setup bot in a group or supergroup
 - <b>/add_admin [token]</b>
   - <i>Description:</i> New admins use this to get authenticated by the bot
+- <b>/reset_points [token]</b>
+  - <i>Description:</i> Resets all user points.
 
 <b>Button description</b>
   🔹 <b>Set post:</b> Use this button to set a new post for the campaign.
@@ -31,7 +33,6 @@ const adminCommand = `
   🔹 <b>Update admin:</b> Inform the bot that a new administator has been added.
   🔹 <b>Generate token:</b> Use this to generate tokens for new admins to get recognized by the bot.
   🔹 <b>Posts:</b> View the list of previous campaign posts.
-  🔹 <b>Reset Points:</b> Resets all user points.
 `;
 
 const helpMessage = `

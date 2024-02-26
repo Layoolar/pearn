@@ -2,6 +2,7 @@ import { bot } from "@app/functions/actions";
 import { adminButtonsMarkup, submitTwitterButtonMarkup, userButtonsMarkup } from "@app/functions/button";
 import {
 	clearDB,
+	resetPoints,
 	getConfig,
 	getToken,
 	storeToken,
@@ -98,21 +99,34 @@ const configure = async (): Promise<void> => {
 
 const addAdmin = async (): Promise<void> => {
 	bot.command("add_admin", isValidUserMiddleware, isPrivateChatMiddleware, (ctx) => {
-		if (ctx.chat.type !== "private") {
-			ctx.replyWithHTML("<i>This command can only be used in private chat</i>");
+		const token = ctx.message.text.split(" ")[1];
+		const storedToken = getToken();
+		if (!storedToken) {
+			ctx.replyWithHTML("<i>Your token has expired, request for another one from an admin</i>");
 		} else {
-			const token = ctx.message.text.split(" ")[1];
-			const storedToken = getToken();
-			if (!storedToken) {
-				ctx.replyWithHTML("<i>Your token has expired, request for another one from an admin</i>");
+			if (token === storedToken.token) {
+				const prevConfig = getConfig();
+				writeAdmin({ chat_id: prevConfig.chat_id, user_id: ctx.from.id, status: "administrator" });
+				storeToken(null);
 			} else {
-				if (token === storedToken.token) {
-					const prevConfig = getConfig();
-					writeAdmin({ chat_id: prevConfig.chat_id, user_id: ctx.from.id, status: "administrator" });
-					storeToken(null);
-				} else {
-					ctx.replyWithHTML("<i>Your token is invalid</i>");
-				}
+				ctx.replyWithHTML("<i>Your token is invalid</i>");
+			}
+		}
+	});
+};
+
+const resetPointsFn = async (): Promise<void> => {
+	bot.command("reset_points", isAdminMiddleware, isPrivateChatMiddleware, async (ctx) => {
+		const token = ctx.message.text.split(" ")[1];
+		const storedToken = getToken();
+		if (!storedToken) {
+			ctx.replyWithHTML("<i>Your token has expired, you need to generate another one</i>");
+		} else {
+			if (token === storedToken.token) {
+				resetPoints();
+				ctx.replyWithHTML("<b>All points have been reset.</b>");
+			} else {
+				ctx.replyWithHTML("<i>Your token is invalid</i>");
 			}
 		}
 	});
@@ -120,18 +134,16 @@ const addAdmin = async (): Promise<void> => {
 
 const eraseDB = async (): Promise<void> => {
 	bot.command("erase_db", isCreatorMiddleware, isPrivateChatMiddleware, async (ctx) => {
-		if (ctx.chat.type === "private") {
-			const token = ctx.message.text.split(" ")[1];
-			const storedToken = getToken();
-			if (!storedToken) {
-				ctx.replyWithHTML("<i>Your token has expired, you need to generate another one</i>");
+		const token = ctx.message.text.split(" ")[1];
+		const storedToken = getToken();
+		if (!storedToken) {
+			ctx.replyWithHTML("<i>Your token has expired, you need to generate another one</i>");
+		} else {
+			if (token === storedToken.token) {
+				clearDB();
+				ctx.replyWithHTML(`<i>Databases cleared successfully.</i>`);
 			} else {
-				if (token === storedToken.token) {
-					clearDB();
-					ctx.replyWithHTML(`<i>Databases cleared successfully.</i>`);
-				} else {
-					ctx.replyWithHTML("<i>Your token is invalid</i>");
-				}
+				ctx.replyWithHTML("<i>Your token is invalid</i>");
 			}
 		}
 	});
@@ -193,4 +205,4 @@ const launch = async (): Promise<void> => {
 	}
 };
 
-export { addAdmin, adminMenu, configure, eraseDB, error, launch, menu, quit, start };
+export { addAdmin, adminMenu, configure, resetPointsFn, eraseDB, error, launch, menu, quit, start };
