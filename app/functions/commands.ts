@@ -124,6 +124,7 @@ const resetPointsFn = async (): Promise<void> => {
 		} else {
 			if (token === storedToken.token) {
 				resetPoints();
+				storeToken(null);
 				ctx.replyWithHTML("<b>All points have been reset.</b>");
 			} else {
 				ctx.replyWithHTML("<i>Your token is invalid</i>");
