@@ -1,6 +1,5 @@
 import { WizardContext } from "@app/functions/telegraf";
 import { Composer, Markup, Scenes } from "telegraf";
-import { userButtonsMarkup } from "../button";
 import { writeUser } from "../databases";
 import { isAddress } from "web3-validator";
 import { initialData } from "./shared";
