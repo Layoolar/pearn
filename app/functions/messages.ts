@@ -8,11 +8,12 @@ const commands = `
 <b>Button description</b>
   🔹 <b>Help:</b> Get assistance on how to use the bot.
   🔹 <b>Points:</b> View your points or scores.
-  🔹 <b>Submit comment:</b> Submit a comment for a specific action.
-  🔹 <b>Generate comment:</b> Generate a comment for a specific action.
+  🔹 <b>Submit Comment:</b> Submit a comment for a specific action.
+  🔹 <b>Generate Comment:</b> Generate a comment for a specific action.
   🔹 <b>Leaderboard:</b> View the leaderboard of users.
-  🔹 <b>Change twitter username:</b> Submit or update your Twitter username.
-  🔹 <b>List campaigns:</b> List ongoing campaigns.
+  🔹 <b>Change Twitter username:</b> Submit or update your Twitter username.
+  🔹 <b>List Campaigns:</b> List ongoing campaigns.
+  🔹 <b>Submit Wallet:</b> Submit your Ethereum wallet address.
 `;
 
 const adminCommand = `
@@ -30,6 +31,7 @@ const adminCommand = `
   🔹 <b>Update admin:</b> Inform the bot that a new administator has been added.
   🔹 <b>Generate token:</b> Use this to generate tokens for new admins to get recognized by the bot.
   🔹 <b>Posts:</b> View the list of previous campaign posts.
+  🔹 <b>Reset Points:</b> Resets all user points.
 `;
 
 const helpMessage = `
