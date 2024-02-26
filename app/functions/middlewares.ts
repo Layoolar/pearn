@@ -83,6 +83,17 @@ const isCreatorMiddleware: MiddlewareFn<Context> = (ctx, next) => {
 	}
 };
 
+//
+const isPrivateChatMiddleware: MiddlewareFn<Context> = (ctx, next) => {
+	if (ctx.chat?.type === "private") {
+		next();
+	} else {
+		ctx.replyWithHTML(
+			`This command can only be used privately <a href="tg://resolve?domain=TauDGX1_bot&start=/menu">TAU DGX-1</a>.`,
+		);
+	}
+};
+
 // Middleware to check if user is admin
 const isAdminMiddleware: MiddlewareFn<Context> = (ctx, next) => {
 	if (ctx.from) {
@@ -130,6 +141,7 @@ bot.use(eventLoggingMiddleware, errorLoggerMiddleware);
 export {
 	bot,
 	isFromAuthorizedGroupMiddleware,
+	isPrivateChatMiddleware,
 	isValidUserMiddleware,
 	isAdminMiddleware,
 	isCreatorMiddleware,

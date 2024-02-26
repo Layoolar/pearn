@@ -61,7 +61,8 @@
 		"lowdb": "^1.0.0",
 		"openai": "^4.26.0",
 		"telegraf": "^4.4.2",
-		"twitter-api-v2": "^1.16.0"
+		"twitter-api-v2": "^1.16.0",
+		"web3-validator": "^2.0.4"
 	},
 	"devDependencies": {
 		"@ptkdev/all-shields-cli": "^2.0.2",

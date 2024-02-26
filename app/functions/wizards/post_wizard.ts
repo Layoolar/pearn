@@ -3,17 +3,7 @@ import { WizardContext } from "@app/functions/telegraf";
 import { Post, getConfig, writeChatData, writePost } from "@app/functions/databases";
 import { collectWords, extractId, startsWithTag } from "@app/functions/utils";
 import { setPostButtonMarkup, startRaidButtonMarkup } from "@app/functions/button";
-
-const initialData = {
-	post: {
-		link: "",
-		hashtags: [],
-		keywords: [],
-		sample_comment: "",
-	},
-	comment: {},
-	twitter: {},
-};
+import { initialData } from "./shared";
 
 const stepHandler = new Composer<WizardContext>();
 stepHandler.action("confirm", async (ctx) => {

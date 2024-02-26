@@ -87,6 +87,7 @@ export interface TelegramUserInterface {
 	 *
 	 */
 	twitter_username?: string;
+	eth_wallet_address?: string;
 }
 
 export type ConfigData = {

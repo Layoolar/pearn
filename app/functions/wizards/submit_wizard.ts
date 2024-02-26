@@ -2,17 +2,7 @@ import { Composer, Markup, Scenes } from "telegraf";
 import { WizardContext } from "@app/functions/telegraf";
 import { extractId, extractUsername } from "@app/functions/utils";
 import { getChatData, getConfig, getUser, writeComment } from "@app/functions/databases";
-
-const initialData = {
-	post: {
-		link: "",
-		hashtags: [],
-		keywords: [],
-		sample_comment: "",
-	},
-	comment: {},
-	twitter: {},
-};
+import { initialData } from "./shared";
 
 const stepHandler = new Composer<WizardContext>();
 stepHandler.action("confirm", async (ctx) => {

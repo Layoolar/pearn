@@ -11,6 +11,7 @@ import {
 	getPosts,
 	getTop10Points,
 	getUser,
+	resetPoints,
 	storeToken,
 	writeChatData,
 } from "@app/functions/databases";
@@ -19,6 +20,7 @@ import { helpMessage, raidEnd, raidMessage } from "@app/functions/messages";
 import {
 	hasSubmittedTwitterMiddleware,
 	isAdminMiddleware,
+	isPrivateChatMiddleware,
 	isRaidOnMiddleware,
 	isValidUserMiddleware,
 } from "@app/functions/middlewares";
@@ -31,19 +33,31 @@ bot.action("set_post", isValidUserMiddleware, isAdminMiddleware, async (ctx) => 
 	await ctx.scene.enter("post-wizard");
 });
 
-bot.action("submit_wallet", async (ctx) => {
-	await ctx.reply("This feature is not yet available");
-});
+bot.action(
+	"submit_comment",
+	isValidUserMiddleware,
+	isRaidOnMiddleware,
+	hasSubmittedTwitterMiddleware,
+	isPrivateChatMiddleware,
+	async (ctx) => {
+		await ctx.scene.enter("submit-wizard");
+	},
+);
 
-bot.action("submit_comment", isValidUserMiddleware, isRaidOnMiddleware, hasSubmittedTwitterMiddleware, async (ctx) => {
-	await ctx.scene.enter("submit-wizard");
-});
-
-bot.action("submit_twitter", isValidUserMiddleware, async (ctx) => {
+bot.action("submit_twitter", isValidUserMiddleware, isPrivateChatMiddleware, async (ctx) => {
 	await ctx.scene.enter("username-wizard");
 });
 
-bot.action("generate_comment", isValidUserMiddleware, isRaidOnMiddleware, async (ctx) => {
+bot.action("submit_wallet", isValidUserMiddleware, isPrivateChatMiddleware, async (ctx) => {
+	await ctx.scene.enter("wallet-wizard");
+});
+
+bot.action("reset_points", isAdminMiddleware, isPrivateChatMiddleware, async (ctx) => {
+	resetPoints();
+	ctx.replyWithHTML("<b>All points have been reset.</b>");
+});
+
+bot.action("generate_comment", isValidUserMiddleware, isPrivateChatMiddleware, isRaidOnMiddleware, async (ctx) => {
 	const config = getConfig();
 	const chat_data = getChatData(config.chat_id);
 	if (!chat_data || !chat_data.latestRaidPostId) {
@@ -67,7 +81,7 @@ bot.action("generate_comment", isValidUserMiddleware, isRaidOnMiddleware, async 
 	}
 });
 
-bot.action("generate_token", isAdminMiddleware, async (ctx) => {
+bot.action("generate_token", isAdminMiddleware, isPrivateChatMiddleware, async (ctx) => {
 	if (ctx.chat && ctx.chat.type === "private") {
 		const command = "openssl rand -base64 32";
 		const config = getConfig();
@@ -90,7 +104,7 @@ bot.action("generate_token", isAdminMiddleware, async (ctx) => {
 	}
 });
 
-bot.action("list_raids", isValidUserMiddleware, async (ctx) => {
+bot.action("list_raids", isValidUserMiddleware, isPrivateChatMiddleware, async (ctx) => {
 	const config = getConfig();
 	const chatData = getChatData(config.chat_id);
 	if (chatData && chatData.latestRaidPostId) {
@@ -124,7 +138,7 @@ bot.action("posts", isValidUserMiddleware, isAdminMiddleware, async (ctx) => {
 	}
 });
 
-bot.action("points", isValidUserMiddleware, (ctx) => {
+bot.action("points", isValidUserMiddleware, isPrivateChatMiddleware, (ctx) => {
 	const user = ctx.from;
 	if (user) {
 		const user_name = user.username || user.first_name || user.last_name || "";
@@ -168,7 +182,7 @@ bot.action("leaderboard", isValidUserMiddleware, (ctx) => {
 	}
 });
 
-bot.action("start_raid", isAdminMiddleware, async (ctx) => {
+bot.action("start_raid", isAdminMiddleware, isPrivateChatMiddleware, async (ctx) => {
 	if (ctx.chat && ctx.chat.type !== "private") {
 		ctx.reply("You need to use this command privately");
 		return;

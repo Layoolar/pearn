@@ -14,7 +14,12 @@ import {
 } from "@app/functions/databases";
 import { launchPolling, launchWebhook } from "@app/functions/launcher";
 import { adminCommand, helpMessage, initialWelcomeMessage } from "@app/functions/messages";
-import { isAdminMiddleware, isCreatorMiddleware, isValidUserMiddleware } from "@app/functions/middlewares";
+import {
+	isAdminMiddleware,
+	isCreatorMiddleware,
+	isPrivateChatMiddleware,
+	isValidUserMiddleware,
+} from "@app/functions/middlewares";
 import config from "@configs/config";
 import writeLog from "./logger";
 
@@ -92,7 +97,7 @@ const configure = async (): Promise<void> => {
 };
 
 const addAdmin = async (): Promise<void> => {
-	bot.command("add_admin", isValidUserMiddleware, (ctx) => {
+	bot.command("add_admin", isValidUserMiddleware, isPrivateChatMiddleware, (ctx) => {
 		if (ctx.chat.type !== "private") {
 			ctx.replyWithHTML("<i>This command can only be used in private chat</i>");
 		} else {
@@ -114,7 +119,7 @@ const addAdmin = async (): Promise<void> => {
 };
 
 const eraseDB = async (): Promise<void> => {
-	bot.command("erase_db", isCreatorMiddleware, async (ctx) => {
+	bot.command("erase_db", isCreatorMiddleware, isPrivateChatMiddleware, async (ctx) => {
 		if (ctx.chat.type === "private") {
 			const token = ctx.message.text.split(" ")[1];
 			const storedToken = getToken();
@@ -136,7 +141,7 @@ const eraseDB = async (): Promise<void> => {
  *
  */
 const quit = async (): Promise<void> => {
-	bot.command("quit", isCreatorMiddleware, async (ctx) => {
+	bot.command("quit", isCreatorMiddleware, isPrivateChatMiddleware, async (ctx) => {
 		const config = getConfig();
 		ctx.telegram.leaveChat(config.chat_id);
 	});

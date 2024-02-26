@@ -24,6 +24,9 @@ interface MyWizardSession extends Scenes.WizardSessionData {
 		twitter: {
 			[k: number]: string;
 		};
+		wallet: {
+			[k: number]: string;
+		};
 	};
 }
 

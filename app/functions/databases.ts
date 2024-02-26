@@ -201,6 +201,21 @@ const writePoint = async (userId: number, points: number): Promise<void> => {
 };
 
 /**
+ * resetPoints()
+ * ====================
+ * Resets all points to zero
+ *
+ * @return { void } - returns no value
+ */
+const resetPoints = (): void => {
+	const users = dataDB.get("points").value();
+	users.forEach((user) => {
+		user.points = 0;
+	});
+	dataDB.set("points", users).write();
+};
+
+/**
  * getPoints()
  * ==================
  * gets top 10 user points
@@ -356,6 +371,7 @@ export {
 	writeAdmin,
 	getAdmin,
 	writePoint,
+	resetPoints,
 	getTop10Points,
 	Post,
 	writePost,
