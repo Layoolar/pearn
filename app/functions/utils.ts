@@ -23,10 +23,10 @@ const extractId = (link: string): string | null => {
  * @return {string | null} - match or null
  */
 const extractUsername = (link: string): string | null => {
-	const regexPattern = /twitter\.com\/([^/]+)\/status\/(\d+)/;
+	const regexPattern = /(twitter|x)\.com\/([^/]+)\/status\/(\d+)/;
 	const match = link.match(regexPattern);
-	if (match && match.length === 3) {
-		return match[1]; // Extracted username
+	if (match && match.length === 4) {
+		return match[3]; // Extracted username
 	} else {
 		return null;
 	}
