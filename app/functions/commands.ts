@@ -23,6 +23,8 @@ import {
 } from "@app/functions/middlewares";
 import config from "@configs/config";
 import writeLog from "./logger";
+import fs from "fs";
+import path from "path";
 
 /**
  * command: /start
@@ -56,10 +58,10 @@ const start = async (): Promise<void> => {
 				} else {
 					writeUser(ctx.update.message.from);
 					writePoint(ctx.update.message.from.id, 0);
-					ctx.telegram.sendPhoto(ctx.from.id, {
-						source: "../../assets/TAU_DGX-1.jpg",
+					await ctx.telegram.sendPhoto(ctx.from.id, {
+						source: path.join(__dirname, "../../assets/TAU_DGX-1.jpg"),
 					});
-					ctx.replyWithHTML(initialWelcomeMessage, submitTwitterButtonMarkup);
+					await ctx.replyWithHTML(initialWelcomeMessage, submitTwitterButtonMarkup);
 				}
 			} else {
 				ctx.replyWithHTML(
@@ -68,7 +70,7 @@ const start = async (): Promise<void> => {
 			}
 		} else {
 			ctx.replyWithHTML(
-				"<b>You need to use /start in a private message to TAU DGX-1 before you can use commands</b>",
+				`<b>You need to use /start in a private message to <a href="tg://resolve?domain=TauDGX1_bot&start=/start">TAU DGX-1</a> before you can use commands</b>`,
 			);
 		}
 	});
