@@ -82,16 +82,16 @@ class AnalyzeComment {
 			for (const dt of collection) {
 				const { error, data } = dt;
 				if (!error) {
-					writeLog("comments_fetch.log", `${new Date().toLocaleString()}: ${dt}\n`);
+					writeLog("comments_fetch.log", `${new Date().toLocaleString()}: ${JSON.stringify(dt)}\n`);
 					if ((data as CommentData).user_id && (data as CommentData).points) {
 						writePoint((data as CommentData).user_id, (data as CommentData).points);
 					}
 				} else {
-					writeLog("unfetched_comments.log", `${new Date().toLocaleString()}: ${dt}\n`);
+					writeLog("unfetched_comments.log", `${new Date().toLocaleString()}: ${JSON.stringify(dt)}\n`);
 				}
 			}
 		} catch (error) {
-			writeLog("fetch_error.log", `${new Date().toLocaleString()}: ${error}\n`);
+			writeLog("fetch_error.log", `${new Date().toLocaleString()}: ${JSON.stringify(error)}\n`);
 		} finally {
 			deleteComments(this.postId);
 			writeLog("comments_fetch.log", `${new Date().toLocaleString()}: FETCHING ENDED\n`);
@@ -129,7 +129,7 @@ class AnalyzeComment {
 		} catch (e) {
 			const errors = TwitterApi.getErrors(e);
 			for (const err of errors) {
-				writeLog("fetch_error.log", `${new Date().toLocaleString()}: ${err}\n`);
+				writeLog("fetch_error.log", `${new Date().toLocaleString()}: ${JSON.stringify(err)}\n`);
 				const respObj: ResponseObject<unknown> = {
 					error: true,
 					data: err,

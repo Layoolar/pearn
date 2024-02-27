@@ -4,6 +4,8 @@ const commands = `
   - <i>Description:</i> Start your journey with TAU DGX-1 and receive a warm welcome message.
 - <b>/menu</b>
   - <i>Description:</i> Display all TAU DGX-1 menu buttons.
+- <b>/leaderboard</b>
+  - <i>Description:</i> Display the leaderboard.
 
 <b>Button description</b>
   🔹 <b>Help:</b> Get assistance on how to use the bot.

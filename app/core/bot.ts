@@ -15,7 +15,8 @@ import * as command from "@app/functions/commands";
 (async () => {
 	await command.start();
 	await command.configure();
-	await command.resetPointsFn;
+	await command.resetPointsFn();
+	await command.leaderboardFn();
 	await command.eraseDB();
 	await command.adminMenu();
 	await command.addAdmin();

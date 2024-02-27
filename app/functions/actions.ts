@@ -26,6 +26,7 @@ import {
 import { bot } from "@app/functions/wizards";
 import writeLog from "./logger";
 import makeTerminalRequest from "./terminal";
+import { getLeaderBoard } from "./shared";
 
 // Button actions
 bot.action("set_post", isValidUserMiddleware, isAdminMiddleware, async (ctx) => {
@@ -150,25 +151,7 @@ bot.action("help", isValidUserMiddleware, (ctx) => {
 });
 
 bot.action("leaderboard", isValidUserMiddleware, (ctx) => {
-	if (ctx.chat) {
-		const points = getTop10Points();
-		const topUsers = points.map((point) => {
-			const user = getUser(point.user_id);
-			return {
-				username: user?.twitter_username || user?.first_name || user?.username || "Anonymous user",
-				points: point.points,
-			};
-		});
-
-		let leaderBoardText = "<b>Top 10 Users with the Highest Points:</b>\n\n";
-		topUsers.forEach((user, index) => {
-			leaderBoardText += `<b>${index + 1}.</b> <i>${user.username}</i> - <b>${user.points}</b> points\n`;
-		});
-
-		ctx.telegram.sendMessage(ctx.chat.id, leaderBoardText, {
-			parse_mode: "HTML",
-		});
-	}
+	getLeaderBoard(ctx);
 });
 
 bot.action("start_raid", isAdminMiddleware, isPrivateChatMiddleware, async (ctx) => {
@@ -204,7 +187,16 @@ bot.action("start_raid", isAdminMiddleware, isPrivateChatMiddleware, async (ctx)
 				if (post_id) {
 					writeChatData({ chat_id: config.chat_id, isRaidOn: false, latestRaidPostId: null });
 					const startCheck = new AnalyzeComment(post_id);
-					startCheck.start();
+					startCheck.start().then(() => {
+						ctx.telegram.sendMessage(
+							config.chat_id,
+							`<b>Point allocation completed. New Leaderboard 📢</b>`,
+							{
+								parse_mode: "HTML",
+							},
+						);
+						getLeaderBoard(ctx);
+					});
 				}
 			}
 		}, config.campaign_duration);

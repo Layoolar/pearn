@@ -23,8 +23,8 @@ import {
 } from "@app/functions/middlewares";
 import config from "@configs/config";
 import writeLog from "./logger";
-import fs from "fs";
 import path from "path";
+import { getLeaderBoard } from "./shared";
 
 /**
  * command: /start
@@ -120,6 +120,12 @@ const addAdmin = async (): Promise<void> => {
 	});
 };
 
+const leaderboardFn = async (): Promise<void> => {
+	bot.command("/leaderboard", (ctx) => {
+		getLeaderBoard(ctx);
+	});
+};
+
 const resetPointsFn = async (): Promise<void> => {
 	bot.command("reset_points", isAdminMiddleware, isPrivateChatMiddleware, async (ctx) => {
 		const token = ctx.message.text.split(" ")[1];
@@ -211,4 +217,4 @@ const launch = async (): Promise<void> => {
 	}
 };
 
-export { addAdmin, adminMenu, configure, resetPointsFn, eraseDB, error, launch, menu, quit, start };
+export { addAdmin, adminMenu, configure, resetPointsFn, leaderboardFn, eraseDB, error, launch, menu, quit, start };

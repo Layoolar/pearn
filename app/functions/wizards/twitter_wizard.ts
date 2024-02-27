@@ -11,7 +11,9 @@ stepHandler.on("text", async (ctx) => {
 	if (isValidTwitterUsername(text)) {
 		ctx.scene.session.store.twitter[ctx.from.id] = text;
 		await ctx.reply(
-			`Your Twitter username is: ${text}\n\nPlease confirm if it's correct. It is important to ensure you don't lose points`,
+			`Your Twitter username is: <a href="https://x.com/${text.substring(
+				1,
+			)}">${text}</a>\n\nPlease confirm if it's correct. It is important to ensure you don't lose points`,
 			Markup.inlineKeyboard([
 				Markup.button.callback("Yes", "confirm"),
 				Markup.button.callback("No, enter again", "enter_again"),
