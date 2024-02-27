@@ -200,9 +200,10 @@ bot.action("start_raid", isAdminMiddleware, isPrivateChatMiddleware, async (ctx)
 				ctx.telegram.sendMessage(config.chat_id, raidEnd(getCommentSize(post.post_id)), {
 					parse_mode: "HTML",
 				});
-				if (chat_data.latestRaidPostId) {
+				const post_id = chat_data.latestRaidPostId;
+				if (post_id) {
 					writeChatData({ chat_id: config.chat_id, isRaidOn: false, latestRaidPostId: null });
-					const startCheck = new AnalyzeComment(chat_data.latestRaidPostId);
+					const startCheck = new AnalyzeComment(post_id);
 					startCheck.start();
 				}
 			}
