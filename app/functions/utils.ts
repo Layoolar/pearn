@@ -9,7 +9,7 @@ const extractId = (link: string): string | null => {
 	const regexPattern = /(twitter|x)\.com\/([^/]+)\/status\/(\d+)/;
 	const match = link.match(regexPattern);
 	if (match && match.length === 4) {
-		return match[4]; // Extracted tweet ID
+		return match[3]; // Extracted tweet ID
 	} else {
 		return null;
 	}
@@ -26,7 +26,7 @@ const extractUsername = (link: string): string | null => {
 	const regexPattern = /(twitter|x)\.com\/([^/]+)\/status\/(\d+)/;
 	const match = link.match(regexPattern);
 	if (match && match.length === 4) {
-		return match[3]; // Extracted username
+		return match[2]; // Extracted username
 	} else {
 		return null;
 	}
