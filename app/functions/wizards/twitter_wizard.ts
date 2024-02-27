@@ -10,7 +10,7 @@ stepHandler.on("text", async (ctx) => {
 	const { text } = ctx.message;
 	if (isValidTwitterUsername(text)) {
 		ctx.scene.session.store.twitter[ctx.from.id] = text;
-		await ctx.reply(
+		await ctx.replyWithHTML(
 			`Your Twitter username is: <a href="https://x.com/${text.substring(
 				1,
 			)}">${text}</a>\n\nPlease confirm if it's correct. It is important to ensure you don't lose points`,

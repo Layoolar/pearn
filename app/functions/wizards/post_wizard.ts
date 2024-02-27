@@ -59,7 +59,7 @@ export const postWizard = new Scenes.WizardScene<WizardContext>(
 			return await ctx.scene.leave();
 		}
 		await ctx.replyWithHTML(
-			"<b>Step 2</b>\nPlease submit the hashtags. Make sure they start with a '#' and are comma separated",
+			"<b>Step 2</b>\nPlease submit the hashtags. Make sure they start with a '#' and are separated by commas or spaces",
 		);
 		if (ctx.message && "text" in ctx.message) {
 			ctx.scene.session.store.post.link = ctx.message?.text || "";
@@ -75,12 +75,12 @@ export const postWizard = new Scenes.WizardScene<WizardContext>(
 			if (startsWithTag(tags)) {
 				ctx.scene.session.store.post.hashtags = collectWords(ctx.message.text);
 				await ctx.replyWithHTML(
-					"<b>Step 3</b>\nPlease submit the keywords. Make sure they are comma separated",
+					"<b>Step 3</b>\nPlease submit the keywords. Make sure they are separated by commas or spaces",
 				);
 				return ctx.wizard.next();
 			} else {
 				await ctx.replyWithHTML(
-					"<b>Step 2</b>\nPlease submit the hashtags. Make sure they start with a '#' and are comma separated",
+					"<b>Step 2</b>\nPlease submit the hashtags. Make sure they start with a '#' and are separated by commas or spaces",
 				);
 			}
 		}
