@@ -42,7 +42,7 @@ ${commands}
 const initialWelcomeMessage = `
 <b>Welcome to TAU DGX-1 🤖</b>
 
-Hello there! 👋 Welcome to <b>TAU DGX-1</b>, your friendly companion in the world of awesomeness. We're thrilled to have you on board! Before you proceed, you need to provide you twitter username. To do this, use the button below
+Hello there! 👋 Welcome to <b>TAU DGX-1</b>, your friendly companion in the world of awesomeness. We're thrilled to have you on board! Before you proceed, you need to provide your Twitter username. To do this, use the button below
 `;
 
 const welcomeMessage = `

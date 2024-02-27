@@ -56,6 +56,9 @@ const start = async (): Promise<void> => {
 				} else {
 					writeUser(ctx.update.message.from);
 					writePoint(ctx.update.message.from.id, 0);
+					ctx.telegram.sendPhoto(ctx.from.id, {
+						source: "../../assets/TAU_DGX-1.jpg",
+					});
 					ctx.replyWithHTML(initialWelcomeMessage, submitTwitterButtonMarkup);
 				}
 			} else {

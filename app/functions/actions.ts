@@ -108,7 +108,7 @@ bot.action("list_raids", isValidUserMiddleware, isPrivateChatMiddleware, async (
 			ctx.replyWithHTML("<i>An error occured, please inform an admin about this error</i>");
 		}
 	} else {
-		ctx.replyWithHTML("<b>There is no ongoing campaign</b>");
+		ctx.replyWithHTML("<b>There is no active campaign</b>");
 	}
 });
 
@@ -119,8 +119,7 @@ bot.action("posts", isValidUserMiddleware, isAdminMiddleware, async (ctx) => {
 	} else {
 		posts.forEach(async (post: Post) => {
 			const postHTML = `
-				<b>Post ID ${post.post_id} ${post.post_link}</b>\n<i>${post.full_text}</i>
-				`;
+				<b>Post ID ${post.post_id} ${post.post_link}</b>\n<i>${post.full_text}</i>`;
 			if (ctx.from) {
 				await ctx.telegram.sendMessage(ctx.from.id, postHTML, { parse_mode: "HTML" });
 			}
@@ -201,8 +200,8 @@ bot.action("start_raid", isAdminMiddleware, isPrivateChatMiddleware, async (ctx)
 				ctx.telegram.sendMessage(config.chat_id, raidEnd(getCommentSize(post.post_id)), {
 					parse_mode: "HTML",
 				});
-				writeChatData({ chat_id: config.chat_id, isRaidOn: false });
 				if (chat_data.latestRaidPostId) {
+					writeChatData({ chat_id: config.chat_id, isRaidOn: false, latestRaidPostId: null });
 					const startCheck = new AnalyzeComment(chat_data.latestRaidPostId);
 					startCheck.start();
 				}
