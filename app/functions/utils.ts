@@ -6,10 +6,10 @@
  * @return {boolean} true / false
  */
 const extractId = (link: string): string | null => {
-	const regexPattern = /twitter\.com\/([^/]+)\/status\/(\d+)/;
+	const regexPattern = /(twitter|x)\.com\/([^/]+)\/status\/(\d+)/;
 	const match = link.match(regexPattern);
-	if (match && match.length === 3) {
-		return match[2]; // Extracted tweet ID
+	if (match && match.length === 4) {
+		return match[4]; // Extracted tweet ID
 	} else {
 		return null;
 	}
