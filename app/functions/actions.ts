@@ -9,8 +9,6 @@ import {
 	getConfig,
 	getPost,
 	getPosts,
-	getTop10Points,
-	getUser,
 	storeToken,
 	writeChatData,
 } from "@app/functions/databases";
