@@ -50,6 +50,7 @@ class AnalyzeComment {
 
 	async start(): Promise<void> {
 		try {
+			writeLog("comments_fetch.log", `${new Date().toLocaleString()}: CAMPAIGN ENDED, FETCHING STARTED\n`);
 			const collection: ResponseObject<unknown>[] = [];
 			const desiredTimeInterval = 60000;
 			let lastRequestTimestamp = Date.now();
@@ -78,19 +79,22 @@ class AnalyzeComment {
 				lastRequestTimestamp = Date.now();
 			}
 
-			for (const { error, data } of collection) {
+			for (const dt of collection) {
+				const { error, data } = dt;
 				if (!error) {
+					writeLog("comments_fetch.log", `${new Date().toLocaleString()}: ${dt}\n`);
 					if ((data as CommentData).user_id && (data as CommentData).points) {
 						writePoint((data as CommentData).user_id, (data as CommentData).points);
 					}
 				} else {
-					writeLog("unfetched_comments.log", `${new Date().toLocaleString()}: ${error}\n`);
+					writeLog("unfetched_comments.log", `${new Date().toLocaleString()}: ${dt}\n`);
 				}
 			}
 		} catch (error) {
 			writeLog("fetch_error.log", `${new Date().toLocaleString()}: ${error}\n`);
 		} finally {
-			this.destroy();
+			deleteComments(this.postId);
+			writeLog("comments_fetch.log", `${new Date().toLocaleString()}: FETCHING ENDED\n`);
 		}
 	}
 
@@ -223,10 +227,6 @@ class AnalyzeComment {
 	 */
 	static wait(ms: number): Promise<void> {
 		return new Promise<void>((resolve) => setTimeout(resolve, ms));
-	}
-
-	private destroy() {
-		deleteComments(this.postId);
 	}
 }
 
