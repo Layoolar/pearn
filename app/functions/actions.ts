@@ -28,7 +28,11 @@ import makeTerminalRequest from "./terminal";
 import { getLeaderBoard } from "./shared";
 
 // Button actions
-bot.action("set_post", isAdminMiddleware, async (ctx) => {
+bot.action("set_duration", isAdminMiddleware, isPrivateChatMiddleware, async (ctx) => {
+	await ctx.scene.enter("time-wizard");
+});
+
+bot.action("set_post", isAdminMiddleware, isPrivateChatMiddleware, async (ctx) => {
 	await ctx.scene.enter("post-wizard");
 });
 
@@ -244,7 +248,7 @@ bot.action("start_raid", isAdminMiddleware, isPrivateChatMiddleware, async (ctx)
 			return;
 		}
 		writeChatData({ ...chat_data, isRaidOn: true });
-		ctx.telegram.sendMessage(config.chat_id, raidMessage(post.post_link), {
+		ctx.telegram.sendMessage(config.chat_id, raidMessage(post.post_link, config.campaign_duration / 60000), {
 			parse_mode: "HTML",
 		});
 	}

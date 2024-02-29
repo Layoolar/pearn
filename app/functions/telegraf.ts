@@ -27,6 +27,7 @@ interface MyWizardSession extends Scenes.WizardSessionData {
 		wallet: {
 			[k: number]: string;
 		};
+		time: number;
 	};
 }
 

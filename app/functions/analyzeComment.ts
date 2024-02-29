@@ -49,8 +49,9 @@ class AnalyzeComment {
 	}
 
 	async start(): Promise<void> {
+		const start_time = Date.now();
+		writeLog("comments_fetch.log", `${new Date().toLocaleString()}: CAMPAIGN ENDED, FETCHING STARTED - `);
 		try {
-			writeLog("comments_fetch.log", `${new Date().toLocaleString()}: CAMPAIGN ENDED, FETCHING STARTED\n`);
 			const collection: ResponseObject<unknown>[] = [];
 			const desiredTimeInterval = 60000;
 			let lastRequestTimestamp = Date.now();
@@ -82,7 +83,6 @@ class AnalyzeComment {
 			for (const dt of collection) {
 				const { error, data } = dt;
 				if (!error) {
-					writeLog("comments_fetch.log", `${new Date().toLocaleString()}: ${JSON.stringify(dt)}\n`);
 					if ((data as CommentData).user_id && (data as CommentData).points) {
 						writePoint((data as CommentData).user_id, (data as CommentData).points);
 					}
@@ -90,11 +90,18 @@ class AnalyzeComment {
 					writeLog("unfetched_comments.log", `${new Date().toLocaleString()}: ${JSON.stringify(dt)}\n`);
 				}
 			}
+			writeLog(
+				"comments_fetch.log",
+				`${new Date().toLocaleString()}: Fetched and checked ${collection.length} comments\n`,
+			);
 		} catch (error) {
 			writeLog("fetch_error.log", `${new Date().toLocaleString()}: ${JSON.stringify(error)}\n`);
 		} finally {
 			deleteComments(this.postId);
-			writeLog("comments_fetch.log", `${new Date().toLocaleString()}: FETCHING ENDED\n`);
+			writeLog(
+				"comments_fetch.log",
+				`${new Date().toLocaleString()}: FETCHING ENDED, took ${Date.now() - start_time}ms \n`,
+			);
 		}
 	}
 
@@ -107,7 +114,6 @@ class AnalyzeComment {
 					"tweet.fields": ["text", "entities", "referenced_tweets"],
 				},
 			);
-			writeLog("inspect.log", `${new Date().toLocaleString()}: ${JSON.stringify(response)}\n`);
 			for (const { id, text, entities, referenced_tweets } of response.data) {
 				const current = array.find((item) => item.comment_id === id);
 				if (current && referenced_tweets && this.isDirectReply(referenced_tweets, this.postId)) {

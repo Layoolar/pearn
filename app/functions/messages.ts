@@ -82,20 +82,20 @@ const breakdownMessage = ({
 					To check your total points, click the <b>My points</b> button`;
 };
 
-const raidMessage = (twitter_link: string): string => {
+const raidMessage = (twitter_link: string, duration: number): string => {
 	return `🚀 <b>Campaign Announcement</b> 🚀
 
 Attention all campaigners! 📢
 
 A new campaign has been initiated by the admin. Your mission, should you choose to accept it, is to spread positivity and promote the tweet linked below with your uplifting comments! 💬
 
-➡️ <a href="${twitter_link}">Twitter Link</a>
+➡️ <a href="${twitter_link}">${twitter_link}</a>
 
 To participate:
 1. Click on the Twitter link above to view the tweet.
 2. Head over to <a href="tg://resolve?domain=TauDGX1_bot&start=/menu">TAU DGX-1</a> in your private messages and use the list campaigns.
 3. Click on the "Generate Comment" button to generate your uplifting comment.
-4. Post your comment under the tweet within the next 10 minutes.
+4. Post your comment under the tweet within the next <b>${duration} minutes</b.
 5. Return to <a href="tg://resolve?domain=TauDGX1_bot&start=/menu">TAU DGX-1</a> and submit the link to your comment.
 
 Let's make a difference together! 🌟

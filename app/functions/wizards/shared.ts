@@ -8,4 +8,5 @@ export const initialData = {
 	comment: {},
 	twitter: {},
 	wallet: {},
+	time: 0,
 };
