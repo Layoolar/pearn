@@ -161,7 +161,7 @@ bot.action("points", isValidUserMiddleware, isPrivateChatMiddleware, (ctx) => {
 			return;
 		}
 		const user_name = user_from.username || user_from.first_name || user_from.last_name || "";
-		const twitter = user.twitter_username ? `@${user.twitter_username}` : user_name;
+		const twitter = user.twitter_username ? `${user.twitter_username}` : user_name;
 		const userPoints = dataDB.get("points").find({ user_id: user_from.id }).value();
 		ctx.telegram.sendMessage(
 			user.id,
