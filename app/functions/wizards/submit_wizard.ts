@@ -10,32 +10,43 @@ stepHandler.action("confirm", async (ctx) => {
 		const commentLink = ctx.scene.session.store.comment[ctx.from.id];
 		const commentId = extractId(commentLink);
 		const username = extractUsername(commentLink);
-		if (commentId && `@${username}` === getUser(ctx.from.id)?.twitter_username) {
-			const config = getConfig();
-			const chatData = getChatData(config.chat_id);
-			if (chatData?.latestRaidPostId) {
-				if (!chatData.isRaidOn) {
-					await ctx.replyWithHTML("<b>Too slow, the campaign has ended, look out for the next one</b>");
-				} else {
-					const commentData = {
-						comment_id: commentId,
-						post_id: chatData.latestRaidPostId,
-						user_id: ctx.from.id,
-						url: commentLink,
-					};
-					const saved = await writeComment(commentData);
-					if (saved === -1) {
-						await ctx.replyWithHTML(`<b>You are only allowed to submit one link per post</b>`);
+		if (!commentId || !username) {
+			await ctx.replyWithHTML("<b>Invalid comment link. Please enter a valid twitter comment link.</b>");
+			return await ctx.scene.leave();
+		}
+		const storedTwitterUsername = getUser(ctx.from.id)?.twitter_username;
+		if (storedTwitterUsername && storedTwitterUsername.length) {
+			if (`@${username}` === storedTwitterUsername) {
+				const config = getConfig();
+				const chatData = getChatData(config.chat_id);
+				if (chatData?.latestRaidPostId) {
+					if (!chatData.isRaidOn) {
+						await ctx.replyWithHTML("<b>Too slow, the campaign has ended, look out for the next one</b>");
 					} else {
-						await ctx.replyWithHTML(`<b>Your comment link has been submitted: ${commentLink}</b>`);
+						const commentData = {
+							comment_id: commentId,
+							post_id: chatData.latestRaidPostId,
+							user_id: ctx.from.id,
+							url: commentLink,
+						};
+						const saved = await writeComment(commentData);
+						if (saved === -1) {
+							await ctx.replyWithHTML(`<b>You are only allowed to submit one link per post</b>`);
+						} else {
+							await ctx.replyWithHTML(`<b>Your comment link has been submitted: ${commentLink}</b>`);
+						}
 					}
+				} else {
+					await ctx.replyWithHTML("<b>An error occured, please inform an Admin about this error</b>");
+					return await ctx.scene.leave();
 				}
 			} else {
-				await ctx.replyWithHTML("<b>An error occured, please inform an Admin about this error</b>");
-				return await ctx.scene.leave();
+				await ctx.replyWithHTML(
+					`<b>There is a mismatch between your saved twitter username @${storedTwitterUsername} and your posted comment username @${username}</b>`,
+				);
 			}
 		} else {
-			await ctx.replyWithHTML("<b>Invalid comment link. Please enter a valid twitter comment link.</b>");
+			return await ctx.scene.leave();
 		}
 	} else {
 		await ctx.replyWithHTML("<b>Link was not saved</b>");

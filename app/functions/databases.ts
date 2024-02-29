@@ -119,6 +119,15 @@ const getUser = (id: number): TelegramUserInterface | null => {
 };
 
 /**
+ * @param { string } twitter_username - A user object
+ *
+ * @return { TelegramUserInterface | null } - A user object or null
+ */
+const getUserByTwitterUsername = (twitter_username: string): TelegramUserInterface | null => {
+	return usersDB.get("users").find({ twitter_username }).value();
+};
+
+/**
  * writeChatData()
  * =====================
  * Writes chat data to database
@@ -369,6 +378,7 @@ export {
 	getChatData,
 	writeUser,
 	getUser,
+	getUserByTwitterUsername,
 	writeAdmin,
 	getAdmin,
 	writePoint,

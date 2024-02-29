@@ -121,8 +121,13 @@ const addAdmin = async (): Promise<void> => {
 };
 
 const leaderboardFn = async (): Promise<void> => {
-	bot.command("/leaderboard", (ctx) => {
-		getLeaderBoard(ctx);
+	bot.command("/leaderboard", isValidUserMiddleware, (ctx) => {
+		if (ctx.chat) {
+			const leaderBoardText = getLeaderBoard();
+			ctx.telegram.sendMessage(ctx.chat.id, leaderBoardText, {
+				parse_mode: "HTML",
+			});
+		}
 	});
 };
 
@@ -175,7 +180,7 @@ const quit = async (): Promise<void> => {
  *
  */
 const adminMenu = async (): Promise<void> => {
-	bot.command("/admin", isAdminMiddleware, async (ctx) => {
+	bot.command("/admin", isAdminMiddleware, isPrivateChatMiddleware, async (ctx) => {
 		ctx.telegram.sendMessage(ctx.from.id, adminCommand, {
 			reply_markup: adminButtonsMarkup.reply_markup,
 			parse_mode: "HTML",
@@ -187,7 +192,7 @@ const adminMenu = async (): Promise<void> => {
  *
  */
 const menu = async (): Promise<void> => {
-	bot.command("/menu", isValidUserMiddleware, async (ctx) => {
+	bot.command("/menu", isValidUserMiddleware, isPrivateChatMiddleware, async (ctx) => {
 		ctx.telegram.sendMessage(ctx.from.id, "<b>Menu</b>", {
 			reply_markup: userButtonsMarkup.reply_markup,
 			parse_mode: "HTML",
@@ -197,7 +202,7 @@ const menu = async (): Promise<void> => {
 
 const error = async (): Promise<void> => {
 	bot.catch((err, ctx) => {
-		writeLog("error.log", `${new Date().toLocaleString()}: Error in ${ctx.updateType} ${err}\n`);
+		writeLog("error.log", `${new Date().toLocaleString()}: [bot.catch] Error in ${ctx.updateType} ${err}\n`);
 		ctx.reply("An error occured. Please try again later. If error persists, please contact the admin");
 	});
 };

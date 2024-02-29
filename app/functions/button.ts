@@ -17,11 +17,13 @@ export const leaderboardButton = Markup.button.callback("Leaderboard", "leaderbo
 export const submitWalletButton = Markup.button.callback("Submit Wallet", "submit_wallet");
 export const listRaidButton = Markup.button.callback("List Campaigns", "list_raids");
 export const submitTwitter = Markup.button.callback("Change Twitter Username", "submit_twitter");
+export const showMyTwitterUsername = Markup.button.callback("Show My Twitter Username", "show_my_twitter");
 export const userButtonsMarkup = Markup.inlineKeyboard([
 	[listRaidButton, helpButton],
 	[postsButton, leaderboardButton],
 	[submitTwitter, pointsButton],
 	[submitWalletButton],
+	[showMyTwitterUsername],
 ]);
 export const joinRaidButtonMarkup = Markup.inlineKeyboard([submitCommentButton, generateCommentButton]);
 export const submitTwitterButtonMarkup = Markup.inlineKeyboard([submitTwitter]);

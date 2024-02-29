@@ -107,6 +107,7 @@ class AnalyzeComment {
 					"tweet.fields": ["text", "entities", "referenced_tweets"],
 				},
 			);
+			writeLog("inspect.log", `${new Date().toLocaleString()}: ${JSON.stringify(response)}\n`);
 			for (const { id, text, entities, referenced_tweets } of response.data) {
 				const current = array.find((item) => item.comment_id === id);
 				if (current && referenced_tweets && this.isDirectReply(referenced_tweets, this.postId)) {

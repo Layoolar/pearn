@@ -41,9 +41,9 @@ const errorLoggerMiddleware: MiddlewareFn<Context> = async (ctx, next) => {
 		await next();
 	} catch (error) {
 		if (error instanceof Error) {
-			writeLog("error.log", `${new Date().toLocaleString()}: ${error.stack}\n`);
+			writeLog("error.log", `${new Date().toLocaleString()}: [Middleware] ${error.stack}\n`);
 		} else {
-			writeLog("error.log", `${new Date().toLocaleString()}: ${error}\n`);
+			writeLog("error.log", `${new Date().toLocaleString()}: [Middleware] ${error}\n`);
 		}
 		ctx.reply("An error occurred. Please try again later. If error persists, please contact an admin");
 	}
@@ -59,17 +59,44 @@ const isFromAuthorizedGroupMiddleware: MiddlewareFn<Context> = (ctx, next) => {
 	}
 };
 
+// Middleware to see if user is authorized but not submitted twitter username yet
+const isUserMiddleware: MiddlewareFn<Context> = (ctx, next) => {
+	if (ctx.from) {
+		const user = getUser(ctx.from.id);
+		if (user) {
+			next();
+		} else {
+			ctx.reply(
+				"<i>You need to use /start in a private message to <a href='tg://resolve?domain=TauDGX1_bot&start=/start'>TAU DGX-1</a> before you can use commands</i>",
+				{
+					parse_mode: "HTML",
+				},
+			);
+		}
+	}
+};
+
 // Middleware to check if the user is authorized
 const isValidUserMiddleware: MiddlewareFn<Context> = (ctx, next) => {
-	if (ctx.from && getUser(ctx.from.id)) {
-		next();
-	} else {
-		ctx.reply(
-			"<b>You need to use /start in a private message to <a href='tg://resolve?domain=TauDGX1_bot&start=/start'>TAU DGX-1</a> before you can use commands</b>",
-			{
-				parse_mode: "HTML",
-			},
-		);
+	if (ctx.from) {
+		const user = getUser(ctx.from.id);
+		if (user) {
+			if (user.twitter_username?.length) {
+				next();
+			} else {
+				ctx.replyWithHTML(
+					`<i>You have not provided your twitter username. Use the button below to submit you twitter username. Make sure it starts with an <b>'@'</b> i.e <b>@your_twitter_username</b></i>`,
+					submitTwitterButtonMarkup,
+				);
+			}
+		} else {
+			ctx.reply(
+				"<i>You need to use /start in a private message to <a href='tg://resolve?domain=TauDGX1_bot&start=/start'>TAU DGX-1</a> before you can use commands</i>",
+				{
+					parse_mode: "HTML",
+				},
+			);
+		}
 	}
 };
 
@@ -107,24 +134,6 @@ const isAdminMiddleware: MiddlewareFn<Context> = (ctx, next) => {
 	}
 };
 
-// Error to check if user has provided their twitter info
-const hasSubmittedTwitterMiddleware: MiddlewareFn<Context> = (ctx, next) => {
-	if (!ctx.from) {
-		return;
-	}
-	const submittedTwitter = getUser(ctx.from.id);
-	const isAdmin = getAdmin(ctx.from.id);
-
-	if (submittedTwitter?.twitter_username || isAdmin) {
-		next();
-	} else {
-		ctx.replyWithHTML(
-			`<b>You have not provided your twitter username. Use the button below to submit you twitter username. Make sure it starts with an <i>'@'</i></b>`,
-			submitTwitterButtonMarkup,
-		);
-	}
-};
-
 // Allow users to use submit command when raid is on
 const isRaidOnMiddleware: MiddlewareFn<Context> = (ctx, next) => {
 	const config = getConfig();
@@ -142,9 +151,9 @@ export {
 	bot,
 	isFromAuthorizedGroupMiddleware,
 	isPrivateChatMiddleware,
+	isUserMiddleware,
 	isValidUserMiddleware,
 	isAdminMiddleware,
 	isCreatorMiddleware,
-	hasSubmittedTwitterMiddleware,
 	isRaidOnMiddleware,
 };

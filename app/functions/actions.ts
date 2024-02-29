@@ -9,16 +9,17 @@ import {
 	getConfig,
 	getPost,
 	getPosts,
+	getUser,
 	storeToken,
 	writeChatData,
 } from "@app/functions/databases";
 import { generateComment } from "@app/functions/gpt";
 import { helpMessage, raidEnd, raidMessage } from "@app/functions/messages";
 import {
-	hasSubmittedTwitterMiddleware,
 	isAdminMiddleware,
 	isPrivateChatMiddleware,
 	isRaidOnMiddleware,
+	isUserMiddleware,
 	isValidUserMiddleware,
 } from "@app/functions/middlewares";
 import { bot } from "@app/functions/wizards";
@@ -27,23 +28,48 @@ import makeTerminalRequest from "./terminal";
 import { getLeaderBoard } from "./shared";
 
 // Button actions
-bot.action("set_post", isValidUserMiddleware, isAdminMiddleware, async (ctx) => {
+bot.action("set_post", isAdminMiddleware, async (ctx) => {
 	await ctx.scene.enter("post-wizard");
 });
 
-bot.action(
-	"submit_comment",
-	isValidUserMiddleware,
-	isRaidOnMiddleware,
-	hasSubmittedTwitterMiddleware,
-	isPrivateChatMiddleware,
-	async (ctx) => {
-		await ctx.scene.enter("submit-wizard");
-	},
-);
+bot.action("submit_comment", isValidUserMiddleware, isRaidOnMiddleware, isPrivateChatMiddleware, async (ctx) => {
+	await ctx.scene.enter("submit-wizard");
+});
 
-bot.action("submit_twitter", isValidUserMiddleware, isPrivateChatMiddleware, async (ctx) => {
-	await ctx.scene.enter("username-wizard");
+bot.action("submit_twitter", isUserMiddleware, isPrivateChatMiddleware, async (ctx) => {
+	if (!ctx.from) {
+		return;
+	}
+	const user = getUser(ctx.from.id);
+	if (!user) {
+		return;
+	}
+	const config = getConfig();
+	const chat_data = getChatData(config.chat_id);
+	if (chat_data) {
+		if (chat_data.isRaidOn) {
+			if (user.twitter_username?.length) {
+				ctx.replyWithHTML(`You can not change your Twitter username during a campaign`);
+			} else {
+				await ctx.scene.enter("username-wizard");
+			}
+		} else {
+			await ctx.scene.enter("username-wizard");
+		}
+	}
+});
+
+bot.action("show_my_twitter", isValidUserMiddleware, isPrivateChatMiddleware, async (ctx) => {
+	if (ctx.from) {
+		const user = getUser(ctx.from.id);
+		if (user?.twitter_username) {
+			ctx.replyWithHTML(
+				`Your Twitter username is <a href="https://x.com/${user.twitter_username.substring(1)}">${
+					user.twitter_username
+				}</a>`,
+			);
+		}
+	}
 });
 
 bot.action("submit_wallet", isValidUserMiddleware, isPrivateChatMiddleware, async (ctx) => {
@@ -96,7 +122,7 @@ bot.action("generate_token", isAdminMiddleware, isPrivateChatMiddleware, async (
 bot.action("list_raids", isValidUserMiddleware, isPrivateChatMiddleware, async (ctx) => {
 	const config = getConfig();
 	const chatData = getChatData(config.chat_id);
-	if (chatData && chatData.latestRaidPostId) {
+	if (chatData && chatData.isRaidOn && chatData.latestRaidPostId) {
 		const post = getPost(chatData.latestRaidPostId);
 		if (post) {
 			ctx.replyWithHTML(
@@ -111,14 +137,14 @@ bot.action("list_raids", isValidUserMiddleware, isPrivateChatMiddleware, async (
 	}
 });
 
-bot.action("posts", isValidUserMiddleware, isAdminMiddleware, async (ctx) => {
+bot.action("posts", isAdminMiddleware, isPrivateChatMiddleware, async (ctx) => {
 	const posts = getPosts();
 	if (!posts.length) {
 		ctx.reply("There are no posts");
 	} else {
 		posts.forEach(async (post: Post) => {
 			const postHTML = `
-				<b>Post ID ${post.post_id} ${post.post_link}</b>\n<i>${post.full_text}</i>`;
+				<b>Post ID ${post.post_id} ${post.post_link}</b>\n`;
 			if (ctx.from) {
 				await ctx.telegram.sendMessage(ctx.from.id, postHTML, { parse_mode: "HTML" });
 			}
@@ -127,13 +153,18 @@ bot.action("posts", isValidUserMiddleware, isAdminMiddleware, async (ctx) => {
 });
 
 bot.action("points", isValidUserMiddleware, isPrivateChatMiddleware, (ctx) => {
-	const user = ctx.from;
-	if (user) {
-		const user_name = user.username || user.first_name || user.last_name || "";
-		const userPoints = dataDB.get("points").find({ user_id: user.id }).value();
+	const user_from = ctx.from;
+	if (user_from) {
+		const user = getUser(ctx.from.id);
+		if (!user) {
+			return;
+		}
+		const user_name = user_from.username || user_from.first_name || user_from.last_name || "";
+		const twitter = user.twitter_username ? `@${user.twitter_username}` : user_name;
+		const userPoints = dataDB.get("points").find({ user_id: user_from.id }).value();
 		ctx.telegram.sendMessage(
 			user.id,
-			`<b>${user_name}, you currently have ${userPoints.points} point${userPoints.points === 1 ? "" : "s"}</b>`,
+			`<b>${twitter}, you currently have ${userPoints.points} point${userPoints.points === 1 ? "" : "s"}</b>`,
 			{ parse_mode: "HTML" },
 		);
 	}
@@ -149,7 +180,12 @@ bot.action("help", isValidUserMiddleware, (ctx) => {
 });
 
 bot.action("leaderboard", isValidUserMiddleware, (ctx) => {
-	getLeaderBoard(ctx);
+	if (ctx.chat) {
+		const leaderBoardText = getLeaderBoard();
+		ctx.telegram.sendMessage(ctx.chat.id, leaderBoardText, {
+			parse_mode: "HTML",
+		});
+	}
 });
 
 bot.action("start_raid", isAdminMiddleware, isPrivateChatMiddleware, async (ctx) => {
@@ -185,15 +221,15 @@ bot.action("start_raid", isAdminMiddleware, isPrivateChatMiddleware, async (ctx)
 				if (post_id) {
 					writeChatData({ chat_id: config.chat_id, isRaidOn: false, latestRaidPostId: null });
 					const startCheck = new AnalyzeComment(post_id);
-					startCheck.start().then(() => {
+					startCheck.start().finally(() => {
+						const leaderBoardText = getLeaderBoard();
 						ctx.telegram.sendMessage(
 							config.chat_id,
-							`<b>Point allocation completed. New Leaderboard 📢</b>`,
+							`<b>Point allocation complete. New Leaderboard 📢</b>\n\n${leaderBoardText}`,
 							{
 								parse_mode: "HTML",
 							},
 						);
-						getLeaderBoard(ctx);
 					});
 				}
 			}
