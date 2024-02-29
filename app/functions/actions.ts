@@ -248,6 +248,7 @@ bot.action("start_raid", isAdminMiddleware, isPrivateChatMiddleware, async (ctx)
 			return;
 		}
 		writeChatData({ ...chat_data, isRaidOn: true });
+		ctx.replyWithHTML(`Campaign for ${post.post_link} started for ${config.campaign_duration / 60000} minutes`);
 		ctx.telegram.sendMessage(config.chat_id, raidMessage(post.post_link, config.campaign_duration / 60000), {
 			parse_mode: "HTML",
 		});

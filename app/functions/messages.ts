@@ -9,13 +9,14 @@ const commands = `
 
 <b>Button description</b>
   🔹 <b>Help:</b> Get assistance on how to use the bot.
-  🔹 <b>Points:</b> View your points or scores.
-  🔹 <b>Submit Comment:</b> Submit a comment for a specific action.
-  🔹 <b>Generate Comment:</b> Generate a comment for a specific action.
-  🔹 <b>Leaderboard:</b> View the leaderboard of users.
-  🔹 <b>Change Twitter username:</b> Submit or update your Twitter username.
-  🔹 <b>List Campaigns:</b> List ongoing campaigns.
-  🔹 <b>Submit Wallet:</b> Submit your Ethereum wallet address.
+  🔹 <b>Points:</b> Diplays your points.
+  🔹 <b>Submit Comment:</b> Submits a comment for a specific action.
+  🔹 <b>Generate Comment:</b> Generates a comment for a specific campaign.
+  🔹 <b>Leaderboard:</b> Displays the leaderboard of users.
+  🔹 <b>Change Twitter username:</b> Submits or updates your Twitter username.
+  🔹 <b>List Campaigns:</b> Lists ongoing campaigns.
+  🔹 <b>Submit Wallet:</b> Submits your Ethereum wallet address.
+  🔹 <b>Show My Twitter Username:</b> Displays your Twitter username.
 `;
 
 const adminCommand = `
@@ -30,11 +31,11 @@ const adminCommand = `
   - <i>Description:</i> Resets all user points.
 
 <b>Button description</b>
-  🔹 <b>Set post:</b> Use this button to set a new post for the campaign.
-  🔹 <b>Start campaign:</b> Click here to start the campaign with the current set post.
-  🔹 <b>Update admin:</b> Inform the bot that a new administator has been added.
-  🔹 <b>Generate token:</b> Use this to generate tokens for new admins to get recognized by the bot.
-  🔹 <b>Posts:</b> View the list of previous campaign posts.
+  🔹 <b>Set Post:</b> Sets a new post for the campaign.
+  🔹 <b>Start Campaign:</b> Starts the campaign with the current set post.
+  🔹 <b>Generate Token:</b> Generates tokens for new admins to get recognized by the bot.
+  🔹 <b>Posts:</b> Displays the list of previous campaign posts.
+  🔹 <b>Set Campaign Duration:</b> Sets the duration for campaigns.
 `;
 
 const helpMessage = `
@@ -89,13 +90,13 @@ Attention all campaigners! 📢
 
 A new campaign has been initiated by the admin. Your mission, should you choose to accept it, is to spread positivity and promote the tweet linked below with your uplifting comments! 💬
 
-➡️ <a href="${twitter_link}">${twitter_link}</a>
+➡️ <a href="${twitter_link}">POST LINK</a>
 
 To participate:
 1. Click on the Twitter link above to view the tweet.
 2. Head over to <a href="tg://resolve?domain=TauDGX1_bot&start=/menu">TAU DGX-1</a> in your private messages and use the list campaigns.
 3. Click on the "Generate Comment" button to generate your uplifting comment.
-4. Post your comment under the tweet within the next <b>${duration} minutes</b.
+4. Post your comment under the tweet within the next <b>${duration} minute${duration === 1 ? "" : "s"}</b>.
 5. Return to <a href="tg://resolve?domain=TauDGX1_bot&start=/menu">TAU DGX-1</a> and submit the link to your comment.
 
 Let's make a difference together! 🌟
