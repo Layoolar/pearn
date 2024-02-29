@@ -30,19 +30,17 @@ const usersDB = lowdb(usersAdapter);
 const dataDB = lowdb(dataAdapter);
 const configDB = lowdb(configAdapter);
 
+const configDefault = {
+	chat_id: 0,
+	chat_tite: "",
+	creator_id: 0,
+	campaign_duration: 10 * 60 * 1000,
+	token_lifetime: 60 * 1000,
+};
+
 usersDB.defaults({ users: [] }).write();
 dataDB.defaults({ chat_data: [], admins: [], points: [], posts: [], comments: [], token: null }).write();
-configDB
-	.defaults({
-		config: {
-			chat_id: 0,
-			chat_title: "",
-			creator_id: 0,
-			campaign_duration: 5 * 60 * 1000,
-			token_lifetime: 60 * 1000,
-		},
-	})
-	.write();
+configDB.defaults({ config: configDefault }).write();
 
 const clearDB = (): void => {
 	usersDB.get("users").remove().write();
@@ -52,17 +50,7 @@ const clearDB = (): void => {
 	dataDB.get("posts").remove().write();
 	dataDB.get("comments").remove().write();
 	dataDB.set("token", null).write();
-	configDB
-		.assign({
-			config: {
-				chat_id: 0,
-				chat_tite: "",
-				creator_id: 0,
-				campaign_duration: 900000,
-				token_lifetime: 60000,
-			},
-		})
-		.write();
+	configDB.assign({ config: configDefault }).write();
 };
 
 /**
