@@ -90,6 +90,7 @@ bot.action("generate_comment", isValidUserMiddleware, isPrivateChatMiddleware, i
 	const kw = post.entities.keywords;
 	const ht = post.entities.hashtags;
 	const st = post.entities.comment_sample;
+	ctx.replyWithHTML("<i>Generating your comment...</i>");
 	if (ctx.from) {
 		try {
 			const comment = await generateComment(st, kw, ht);
