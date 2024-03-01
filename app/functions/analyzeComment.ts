@@ -82,6 +82,7 @@ class AnalyzeComment {
 
 			for (const dt of collection) {
 				const { error, data } = dt;
+				writeLog("processed_data.log", `${new Date().toLocaleString()}: ${JSON.stringify(dt)}\n`);
 				if (!error) {
 					if ((data as CommentData).user_id && (data as CommentData).points) {
 						writePoint((data as CommentData).user_id, (data as CommentData).points);
