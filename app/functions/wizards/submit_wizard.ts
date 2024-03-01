@@ -29,8 +29,8 @@ stepHandler.action("confirm", async (ctx) => {
 							user_id: ctx.from.id,
 							url: commentLink,
 						};
-						const saved = await writeComment(commentData);
-						if (saved === -1) {
+						const saved = writeComment(commentData);
+						if (saved) {
 							await ctx.replyWithHTML(`<b>You are only allowed to submit one link per post</b>`);
 						} else {
 							await ctx.replyWithHTML(`<b>Your comment link has been submitted: ${commentLink}</b>`);

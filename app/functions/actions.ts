@@ -224,7 +224,7 @@ bot.action("start_raid", isAdminMiddleware, isPrivateChatMiddleware, async (ctx)
 				});
 				const post_id = chat_data.latestRaidPostId;
 				if (post_id) {
-					writeChatData({ chat_id: config.chat_id, isRaidOn: false, latestRaidPostId: null });
+					writeChatData({ chat_id: config.chat_id, isRaidOn: false });
 					const startCheck = new AnalyzeComment(post_id);
 					startCheck.start().finally(() => {
 						const leaderBoardText = getLeaderBoard();

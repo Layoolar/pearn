@@ -87,7 +87,7 @@ const getConfig = (): ConfigData => {
  * @param { TelegramUserInterface } json - telegram user object
  *
  */
-const writeUser = async (json: TelegramUserInterface): Promise<void> => {
+const writeUser = (json: TelegramUserInterface): void => {
 	const user_id = usersDB.get("users").find({ id: json.id }).value();
 
 	if (user_id) {
@@ -122,9 +122,9 @@ const getUserByTwitterUsername = (twitter_username: string): TelegramUserInterfa
  *
  * @param { ChatData } chat_data - The data object to be written to the database.
  *
- * @return { Promise<void> } - A Promise that resolves when the operation is complete.
+ * @return { void } - A Promise that resolves when the operation is complete.
  */
-const writeChatData = async (chat_data: ChatData): Promise<void> => {
+const writeChatData = (chat_data: ChatData): void => {
 	const exists = dataDB.get("chat_data").find({ chat_id: chat_data.chat_id }).value();
 	if (exists) {
 		dataDB.get("chat_data").find({ chat_id: chat_data.chat_id }).assign(chat_data).write();
@@ -139,7 +139,7 @@ const writeChatData = async (chat_data: ChatData): Promise<void> => {
  * Gets chat data from database
  * @param { string | number} chat_id - The chat id
  *
- * @return { Promise<ChatData | null> } -
+ * @return { ChatData | null } -
  */
 const getChatData = (chat_id: string | number): ChatData | null => {
 	return dataDB.get("chat_data").find({ chat_id }).value();
@@ -152,9 +152,9 @@ const getChatData = (chat_id: string | number): ChatData | null => {
  *
  * @param { Admin } admin_data - Telegram admin object
  *
- * @return {Promise<void>} - A Promise that resolves when the operation is complete.
+ * @return { void } - A Promise that resolves when the operation is complete.
  */
-const writeAdmin = async (admin_data: Admin): Promise<void> => {
+const writeAdmin = (admin_data: Admin): void => {
 	const exists = dataDB.get("admins").find({ user_id: admin_data.user_id }).value();
 	if (!exists) {
 		dataDB.get("admins").push(admin_data).write();
@@ -183,9 +183,9 @@ const getAdmin = (user_id: number): Admin | null => {
  * @param { number } userId - The ID of the user for whom points are being written.
  * @param { number } points - The number of points to be added.
  *
- * @return { Promise<void> } - A Promise that resolves when the operation is complete.
+ * @return { void } - A Promise that resolves when the operation is complete.
  */
-const writePoint = async (userId: number, points: number): Promise<void> => {
+const writePoint = (userId: number, points: number): void => {
 	const userPoints = dataDB.get("points").find({ user_id: userId }).value();
 	if (userPoints) {
 		dataDB
@@ -230,9 +230,9 @@ const getTop10Points = (): Point[] => {
  *
  * @param { Post } post - The post object to be written to the database.
  *
- * @return {Promise<void>} - A Promise that resolves when the operation is complete.
+ * @return {void} - A Promise that resolves when the operation is complete.
  */
-const writePost = async (post: Post): Promise<void> => {
+const writePost = (post: Post): void => {
 	const postExists = dataDB.get("posts").find({ post_id: post.post_id }).value();
 
 	if (postExists) {
@@ -277,16 +277,16 @@ const getPosts = (): Post[] => {
  *
  * @param { CommentData } commentData - The link object to be written to the database.
  *
- * @return { Promise<void | -1> } - A Promise that resolves when the operation is complete or -1 if the link already exists.
+ * @return { boolean } - A Promise that resolves when the operation is complete or -1 if the link already exists.
  */
-const writeComment = async (commentData: CommentDBData): Promise<void | -1> => {
+const writeComment = (commentData: CommentDBData): boolean => {
 	const link = dataDB.get("comments").find({ post_id: commentData.post_id, user_id: commentData.user_id }).value();
 
 	if (!link) {
 		dataDB.get("comments").push(commentData).write();
-		return;
+		return true;
 	}
-	return -1;
+	return false;
 };
 
 /**
@@ -295,7 +295,7 @@ const writeComment = async (commentData: CommentDBData): Promise<void | -1> => {
  * Gets a link from database
  * @param { CommentData } commentData - The link object to be found
  *
- * @return { Promise<CommentData | null> } -
+ * @return { CommentData | null } -
  */
 const getComment = (commentData: CommentDBData): CommentDBData | null => {
 	return dataDB.get("comments").find({ post_id: commentData.post_id, user_id: commentData.user_id }).value();
@@ -306,7 +306,7 @@ const getComment = (commentData: CommentDBData): CommentDBData | null => {
  * ======================
  * Gets a link from database
  * @param { string } post_id - The replied post
- * @return { Promise<CommentData[]> } - Array of comments
+ * @return { CommentData[] } - Array of comments
  */
 const getComments = (post_id: string): CommentDBData[] => {
 	return dataDB.get("comments").filter({ post_id }).value();

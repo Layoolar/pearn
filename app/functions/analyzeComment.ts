@@ -92,7 +92,7 @@ class AnalyzeComment {
 			}
 			writeLog(
 				"comments_fetch.log",
-				`${new Date().toLocaleString()}: Fetched and checked ${collection.length} comments\n`,
+				`${new Date().toLocaleString()}: Fetched and checked ${collection.length} comments `,
 			);
 		} catch (error) {
 			writeLog("fetch_error.log", `${new Date().toLocaleString()}: ${JSON.stringify(error)}\n`);
