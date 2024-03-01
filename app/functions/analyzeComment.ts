@@ -108,9 +108,9 @@ class AnalyzeComment {
 
 	private async fetchBatchComments(array: CommentDBData[]): Promise<ResponseObject<CommentData | unknown>[]> {
 		const res = [];
+		const tweet_ids = array.map((commentData) => commentData.comment_id);
 		try {
-			const response = await twitterClient.v2.tweets(
-				array.map((commentData) => commentData.comment_id),
+			const response = await twitterClient.v2.tweets(tweet_ids,
 				{
 					"tweet.fields": ["text", "entities", "referenced_tweets"],
 				},
