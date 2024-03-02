@@ -219,8 +219,8 @@ const resetPoints = (): void => {
  * gets top 10 user points
  * @return {Point[]} - top 10 points
  */
-const getTop10Points = (): Point[] => {
-	return dataDB.get("points").sortBy("points").take(10).reverse().value();
+const getPoints = (): Point[] => {
+	return dataDB.get("points").value();
 };
 
 /**
@@ -371,7 +371,7 @@ export {
 	getAdmin,
 	writePoint,
 	resetPoints,
-	getTop10Points,
+	getPoints,
 	Post,
 	writePost,
 	getPosts,
