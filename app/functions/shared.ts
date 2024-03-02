@@ -2,7 +2,7 @@ import { getPoints, getUser } from "./databases";
 
 export const getLeaderBoard = (): string => {
 	const points = getPoints();
-	const top10 = points.sort((a, b) => b.points - a.points);
+	const top10 = points.sort((a, b) => b.points - a.points).slice(0, 10);
 	const topUsers = top10.map((point) => {
 		const user = getUser(point.user_id);
 		let twitterLink = null;
