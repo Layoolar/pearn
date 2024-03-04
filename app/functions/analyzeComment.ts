@@ -83,6 +83,7 @@ class AnalyzeComment {
 			for (const dt of collection) {
 				const { error, data } = dt;
 				if (!error) {
+					writeLog("comments_history.log", `${new Date().toLocaleString()}: ${JSON.stringify(dt)}\n`);
 					if ((data as CommentData).user_id && (data as CommentData).points) {
 						writePoint((data as CommentData).user_id, (data as CommentData).points);
 					}
@@ -134,6 +135,7 @@ class AnalyzeComment {
 				}
 			}
 		} catch (e) {
+			writeLog("twitter_error.log", `${new Date().toLocaleString()}: ${JSON.stringify(e)}\n`);
 			const errors = TwitterApi.getErrors(e);
 			for (const err of errors) {
 				writeLog("fetch_error.log", `${new Date().toLocaleString()}: ${JSON.stringify(err)}\n`);
