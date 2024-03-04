@@ -49,7 +49,6 @@ class AnalyzeComment {
 	}
 
 	async start(): Promise<void> {
-		const start_time = Date.now();
 		try {
 			const collection: ResponseObject<unknown>[] = [];
 			const desiredTimeInterval = 60000;
