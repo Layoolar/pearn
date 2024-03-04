@@ -49,8 +49,6 @@ class AnalyzeComment {
 	}
 
 	async start(): Promise<void> {
-		const start_time = Date.now();
-		writeLog("comments_fetch.log", `${new Date().toLocaleString()}: CAMPAIGN ENDED, FETCHING STARTED - `);
 		try {
 			const collection: ResponseObject<unknown>[] = [];
 			const desiredTimeInterval = 60000;
@@ -100,10 +98,6 @@ class AnalyzeComment {
 			writeLog("fetch_error.log", `${new Date().toLocaleString()}: ${JSON.stringify(error)}\n`);
 		} finally {
 			deleteComments(this.postId);
-			writeLog(
-				"comments_fetch.log",
-				`${new Date().toLocaleString()}: FETCHING ENDED, took ${Date.now() - start_time}ms \n`,
-			);
 		}
 	}
 
@@ -134,6 +128,7 @@ class AnalyzeComment {
 				}
 			}
 		} catch (e) {
+			writeLog("twitter_error.log", `${new Date().toLocaleString()}: ${JSON.stringify(e)}\n`);
 			const errors = TwitterApi.getErrors(e);
 			for (const err of errors) {
 				writeLog("fetch_error.log", `${new Date().toLocaleString()}: ${JSON.stringify(err)}\n`);
