@@ -60,6 +60,7 @@ class AnalyzeComment {
 				return;
 			}
 			const links = AnalyzeComment.chunkifyArray<CommentDBData>(comment_dbdata, this.fetchSize);
+			console.log(links);
 
 			for (const link of links) {
 				const currentTimestamp = Date.now();
@@ -111,10 +112,12 @@ class AnalyzeComment {
 	private async fetchBatchComments(array: CommentDBData[]): Promise<ResponseObject<CommentData | unknown>[]> {
 		const res = [];
 		const tweet_ids = array.map((commentData) => commentData.comment_id);
+		console.log(tweet_ids);
 		try {
 			const response = await twitterClient.v2.tweets(tweet_ids, {
 				"tweet.fields": ["text", "entities", "referenced_tweets"],
 			});
+			writeLog("response.log", JSON.stringify(response));
 			for (const { id, text, entities, referenced_tweets } of response.data) {
 				const current = array.find((item) => item.comment_id === id);
 				if (current && referenced_tweets && this.isDirectReply(referenced_tweets, this.postId)) {
