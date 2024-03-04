@@ -50,7 +50,6 @@ class AnalyzeComment {
 
 	async start(): Promise<void> {
 		const start_time = Date.now();
-		writeLog("comments_fetch.log", `${new Date().toLocaleString()}: CAMPAIGN ENDED, FETCHING STARTED - `);
 		try {
 			const collection: ResponseObject<unknown>[] = [];
 			const desiredTimeInterval = 60000;
@@ -60,7 +59,6 @@ class AnalyzeComment {
 				return;
 			}
 			const links = AnalyzeComment.chunkifyArray<CommentDBData>(comment_dbdata, this.fetchSize);
-			console.log(links);
 
 			for (const link of links) {
 				const currentTimestamp = Date.now();
@@ -84,7 +82,6 @@ class AnalyzeComment {
 			for (const dt of collection) {
 				const { error, data } = dt;
 				if (!error) {
-					writeLog("comments_history.log", `${new Date().toLocaleString()}: ${JSON.stringify(dt)}\n`);
 					if ((data as CommentData).user_id && (data as CommentData).points) {
 						writePoint((data as CommentData).user_id, (data as CommentData).points);
 					}
@@ -102,22 +99,16 @@ class AnalyzeComment {
 			writeLog("fetch_error.log", `${new Date().toLocaleString()}: ${JSON.stringify(error)}\n`);
 		} finally {
 			deleteComments(this.postId);
-			writeLog(
-				"comments_fetch.log",
-				`${new Date().toLocaleString()}: FETCHING ENDED, took ${Date.now() - start_time}ms \n`,
-			);
 		}
 	}
 
 	private async fetchBatchComments(array: CommentDBData[]): Promise<ResponseObject<CommentData | unknown>[]> {
 		const res = [];
 		const tweet_ids = array.map((commentData) => commentData.comment_id);
-		console.log(tweet_ids);
 		try {
 			const response = await twitterClient.v2.tweets(tweet_ids, {
 				"tweet.fields": ["text", "entities", "referenced_tweets"],
 			});
-			writeLog("response.log", JSON.stringify(response));
 			for (const { id, text, entities, referenced_tweets } of response.data) {
 				const current = array.find((item) => item.comment_id === id);
 				if (current && referenced_tweets && this.isDirectReply(referenced_tweets, this.postId)) {
