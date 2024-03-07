@@ -5,6 +5,7 @@ export const setPostButton = Markup.button.callback("Set Post", "set_post");
 export const startRaidButton = Markup.button.callback("Start Campaign", "start_raid");
 export const postsButton = Markup.button.callback("Posts", "posts");
 export const generateTokenButton = Markup.button.callback("Generate Token", "generate_token");
+export const adminLeaderBoardButton = Markup.button.callback("All User Points", "all_user_points");
 export const startRaidButtonMarkup = Markup.inlineKeyboard([startRaidButton]);
 export const setPostButtonMarkup = Markup.inlineKeyboard([setPostButton]);
 export const setDurationButtonMarkup = Markup.button.callback("Set Campaign Duration", "set_duration");
@@ -12,6 +13,7 @@ export const adminButtonsMarkup = Markup.inlineKeyboard([
 	[setPostButton, postsButton],
 	[generateTokenButton],
 	[setDurationButtonMarkup],
+	[adminLeaderBoardButton],
 ]);
 // User buttons
 export const helpButton = Markup.button.callback("Help", "help");

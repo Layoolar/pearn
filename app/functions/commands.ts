@@ -123,7 +123,7 @@ const addAdmin = async (): Promise<void> => {
 const leaderboardFn = async (): Promise<void> => {
 	bot.command("/leaderboard", isValidUserMiddleware, (ctx) => {
 		if (ctx.chat) {
-			const leaderBoardText = getLeaderBoard();
+			const leaderBoardText = getLeaderBoard(0, 10);
 			ctx.telegram.sendMessage(ctx.chat.id, leaderBoardText, {
 				parse_mode: "HTML",
 			});
