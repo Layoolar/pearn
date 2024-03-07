@@ -25,7 +25,7 @@ import {
 import { bot } from "@app/functions/wizards";
 import writeLog from "./logger";
 import makeTerminalRequest from "./terminal";
-import { getLeaderBoard } from "./shared";
+import { getLeaderBoard, getLeaderBoardInChunks } from "./shared";
 
 // Button actions
 bot.action("set_duration", isAdminMiddleware, isPrivateChatMiddleware, async (ctx) => {
@@ -186,8 +186,16 @@ bot.action("help", isValidUserMiddleware, (ctx) => {
 
 bot.action("leaderboard", isValidUserMiddleware, (ctx) => {
 	if (ctx.chat) {
-		const leaderBoardText = getLeaderBoard();
+		const leaderBoardText = getLeaderBoard(0, 10);
 		ctx.telegram.sendMessage(ctx.chat.id, leaderBoardText, {
+			parse_mode: "HTML",
+		});
+	}
+});
+
+bot.action("all_user_points", isAdminMiddleware, isPrivateChatMiddleware, async (ctx) => {
+	for await (const userPointsText of getLeaderBoardInChunks(130, 40)) {
+		await ctx.replyWithHTML(userPointsText, {
 			parse_mode: "HTML",
 		});
 	}
@@ -227,7 +235,7 @@ bot.action("start_raid", isAdminMiddleware, isPrivateChatMiddleware, async (ctx)
 					writeChatData({ chat_id: config.chat_id, isRaidOn: false });
 					const startCheck = new AnalyzeComment(post_id);
 					startCheck.start().finally(() => {
-						const leaderBoardText = getLeaderBoard();
+						const leaderBoardText = getLeaderBoard(0, 10);
 						ctx.telegram.sendMessage(
 							config.chat_id,
 							`<b>Point allocation complete. New Leaderboard 📢</b>\n\n${leaderBoardText}`,

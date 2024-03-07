@@ -1,3 +1,6 @@
+import { Point } from "@app/types/databases.type";
+import { getUser } from "./databases";
+
 /**
  * extractId()
  * ===========================
