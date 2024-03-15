@@ -28,6 +28,10 @@ interface MyWizardSession extends Scenes.WizardSessionData {
 			[k: number]: string;
 		};
 		time: number;
+		sol_transaction: {
+			wallet_address: string;
+			amount_to_send: string;
+		};
 	};
 }
 

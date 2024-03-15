@@ -9,4 +9,8 @@ export const initialData = {
 	twitter: {},
 	wallet: {},
 	time: 0,
+	sol_transaction: {
+		wallet_address: "",
+		amount_to_send: "",
+	},
 };
